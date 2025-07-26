@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+@import './base.css';
+
+
+
+#__nuxt {
+    width: 100vw;
+    height: 100vh;
+}
+
+@media (min-width: 1024px) {
+    body {
+        display: flex;
+        place-items: center;
+    }
+}
+
+@layer components {
+    .fullscreen-modal {
+        @apply bg-background-primary/75 absolute top-0 left-0 z-20 flex h-full w-full items-center justify-center p-8 backdrop-blur-xs;
+    }
+
+    .page-root {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    .clickable {
+        cursor: pointer;
+        transition-timing-function: var(--ease-wl-default);
+        transition-duration: 200ms;
+        transition-property: background-color;
+        border-radius: 0.25rem;
+        padding: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    .clickable:hover {
+        background-color: var(--color-card-background-hover);
+    }
+
+    .goneable {
+        transition: opacity var(--wl-transition-duration) var(--ease-wl-default);
+    }
+
+    .gone {
+        pointer-events: none;
+        opacity: 0;
+    }
+}
