@@ -15,10 +15,25 @@
                 <IconBrush />
             </WeblensButton>
             <WeblensButton
+                label="Users"
+                @click="toSettingsPage('users')"
+            >
+                <IconCode />
+            </WeblensButton>
+            <WeblensButton
                 label="Developer"
                 @click="toSettingsPage('dev')"
             >
                 <IconCode />
+            </WeblensButton>
+
+            <WeblensButton
+                label="Log Out"
+                :class="{ 'mt-auto': true }"
+                flavor="danger"
+                @click="userStore.logout"
+            >
+                <IconLogout />
             </WeblensButton>
         </div>
         <div :class="{ 'h-full w-full p-4': true }">
@@ -28,10 +43,11 @@
 </template>
 
 <script setup lang="ts">
-import { IconBrush, IconCode, IconUser } from '@tabler/icons-vue'
+import { IconBrush, IconCode, IconLogout, IconUser } from '@tabler/icons-vue'
 import WeblensButton from '~/components/atom/WeblensButton.vue'
 
 const towerStore = useTowerStore()
+const userStore = useUserStore()
 
 function toSettingsPage(pageName: string) {
     navigateTo({ path: `/settings/${pageName}` })

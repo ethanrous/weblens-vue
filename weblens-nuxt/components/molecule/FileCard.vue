@@ -2,8 +2,9 @@
     <div
         ref="fileRef"
         :class="{
-            'flex h-max max-h-full': true,
-            'aspect-square w-full max-w-full': true, // TODO: replace when more file shapes
+            'flex max-h-full select-none': true,
+            'aspect-square h-max w-full max-w-full': fileShape === 'square',
+            'h-20 w-full max-w-full': fileShape === 'row',
         }"
         @dblclick.stop="navigateToFile"
         @contextmenu.stop.prevent="handleContextMenu"
@@ -27,9 +28,11 @@
             v-slot="{ isVisible }"
             :class="{ 'h-full w-full': true }"
         >
-            <FileSquare
+            <component
+                :is="fileComponent"
                 :file="file"
                 :file-state="fileState"
+                @context-menu="handleContextMenu"
             >
                 <template #file-visual>
                     <MediaImage
@@ -47,7 +50,7 @@
                         :class="{ 'm-auto h-full': true }"
                     />
                 </template>
-            </FileSquare>
+            </component>
         </UseElementVisibility>
     </div>
 </template>
@@ -58,12 +61,13 @@ import FileSquare from '@/components/molecule/FileSquare.vue'
 import MediaImage from '../atom/MediaImage.vue'
 import { PhotoQuality } from '~/types/weblensMedia'
 import { UseElementVisibility } from '@vueuse/components'
-import useFilesStore from '~/stores/files'
+import useFilesStore, { type FileShape } from '~/stores/files'
 import { IconFolder } from '@tabler/icons-vue'
 import { SelectedState } from '@/types/weblensFile'
 import { useMousePressed } from '@vueuse/core'
 import { moveFiles } from '~/api/FileBrowserApi'
 import type { coordinates } from '~/types/style'
+import FileRow from './FileRow.vue'
 
 const filesStore = useFilesStore()
 const presentationStore = usePresentationStore()
@@ -81,32 +85,43 @@ watchEffect(() => {
     }
 })
 
-const props = defineProps<{
+const fileComponent = computed<typeof FileSquare | typeof FileRow>(() => {
+    if (fileShape === 'square') {
+        return FileSquare
+    } else if (fileShape === 'row') {
+        return FileRow
+    }
+
+    return FileSquare
+})
+
+const { file, fileShape } = defineProps<{
     file: WeblensFile
+    fileShape: FileShape
 }>()
 
 function navigateToFile() {
-    if (!props.file.IsFolder()) {
-        return presentationStore.setPresentationFileId(props.file.id)
+    if (!file.IsFolder()) {
+        return presentationStore.setPresentationFileId(file.id)
     }
 
-    return props.file.GoTo()
+    return file.GoTo()
 }
 
 const isSelected = computed(() => {
-    return filesStore.selectedFiles.has(props.file.id)
+    return filesStore.selectedFiles.has(file.id)
 })
 
 const media = computed(() => {
-    return mediaStore.media.get(props.file.GetContentId())
+    return mediaStore.media.get(file.GetContentId())
 })
 
 const fileState = computed(() => {
-    if (filesStore.movedFiles.has(props.file.id)) {
+    if (filesStore.movedFiles.has(file.id)) {
         return SelectedState.Moved
     } else if (isSelected.value) {
         return SelectedState.Selected
-    } else if (filesStore.dragging && props.file.IsFolder() && !filesStore.selectedFiles.has(props.file.id)) {
+    } else if (filesStore.dragging && file.IsFolder() && !filesStore.selectedFiles.has(file.id)) {
         return SelectedState.Hovering
     }
 
@@ -114,7 +129,8 @@ const fileState = computed(() => {
 })
 
 function handleContextMenu(e: MouseEvent) {
-    menuStore.setTarget(props.file.Id())
+    e.stopPropagation()
+    menuStore.setTarget(file.Id())
     menuStore.setMenuOpen(true)
 
     const fbBox = document.getElementById('filebrowser-container')
@@ -130,8 +146,8 @@ function handleContextMenu(e: MouseEvent) {
 
 async function handleDrop(e: MouseEvent) {
     e.stopPropagation()
-    if (filesStore.dragging && props.file.IsFolder() && !filesStore.selectedFiles.has(props.file.id)) {
-        await moveFiles(props.file)
+    if (filesStore.dragging && file.IsFolder() && !filesStore.selectedFiles.has(file.id)) {
+        await moveFiles(file)
     }
     mousePressed.pressed.value = false
 }

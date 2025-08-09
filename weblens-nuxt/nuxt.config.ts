@@ -31,7 +31,7 @@ export default defineNuxtConfig({
         },
     },
     modules: ['@nuxt/eslint', '@nuxt/image', '@pinia/nuxt'],
-    css: ['~/assets/css/main.css'],
+    css: ['~/assets/css/base.css', '~/assets/css/main.css'],
     devServer: {
         port: 3000,
         host: '0.0.0.0',

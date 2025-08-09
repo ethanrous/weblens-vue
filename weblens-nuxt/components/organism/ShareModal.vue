@@ -1,14 +1,14 @@
 <template>
     <div
         :class="{
-            'fullscreen-modal p-48 transition': true,
+            'fullscreen-modal p-12 transition lg:p-48': true,
             'pointer-events-none opacity-0': !menuStore.isSharing,
         }"
     >
         <div
             ref="modal"
             :class="{
-                'bg-card-background-primary flex h-full w-full flex-col gap-4 rounded border p-4': true,
+                'bg-background-primary flex h-full w-full flex-col gap-4 rounded border p-4': true,
             }"
             @click.stop
         >
@@ -20,78 +20,62 @@
                 />
             </div>
 
-            <div :class="{ 'flex w-full': true }">
+            <div :class="{ 'flex w-full gap-2': true }">
                 <UserSearch
                     :exclude-fn="excludeFn"
-                    @select-user="(u) => share?.addAccessor(u.username)"
+                    @select-user="addAccessor"
                 />
                 <WeblensButton
+                    :class="{ 'w-10 sm:w-40': true }"
                     :label="share?.IsPublic() ? 'Public' : 'Private'"
                     :type="share?.IsPublic() ? 'default' : 'outline'"
-                    :class="{
-                        'mr-2 ml-auto': true,
-                    }"
+                    allow-collapse
                     @click="toggleIsPublic"
                 >
                     <IconLock v-if="!share?.IsPublic()" />
                     <IconLockOpen v-else />
                 </WeblensButton>
                 <WeblensButton
+                    :class="{ 'w-10 sm:w-40': true }"
                     label="Timeline Only"
                     :type="share?.timelineOnly ? 'default' : 'outline'"
+                    allow-collapse
                     @click="toggleTimelienOnly"
                 >
                     <IconPhoto v-if="share?.timelineOnly" />
                     <IconPhotoOff v-else />
                 </WeblensButton>
             </div>
-            <div :class="{ 'flex flex-col items-center': true }">
-                <div
-                    v-for="user of share?.accessors"
-                    :key="user.username"
-                    :class="{ 'bg-card-background-secondary flex w-full items-center gap-1 rounded p-2': true }"
-                >
-                    <h5>{{ user.fullName }} ({{ user.username }})</h5>
-                    <WeblensButton
-                        flavor="danger"
-                        :class="{ 'ml-auto': true }"
-                        @click.stop="share?.removeAccessor(user.username)"
-                    >
-                        <IconTrash />
-                    </WeblensButton>
-                </div>
-            </div>
+            <Table
+                :columns="['username', 'canDownload', 'canEdit', 'canDelete', 'unshare']"
+                :rows="accessors"
+            />
             <CopyBox
                 :text="share?.Id() ? share?.GetLink() : undefined"
                 :class="{ 'mt-auto': true }"
             />
             <div :class="{ 'flex gap-2': true }">
                 <WeblensButton
-                    label="Cancel"
-                    flavor="secondary"
-                    fill-width
+                    label="Done"
+                    :class="{ 'ml-auto w-1/2': true }"
                     @click.stop="menuStore.setSharing(false)"
                 />
-                <WeblensButton
-                    label="Share"
-                    fill-width
-                >
-                    <IconUserPlus />
-                </WeblensButton>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { IconLock, IconLockOpen, IconPhoto, IconPhotoOff, IconTrash, IconUserPlus } from '@tabler/icons-vue'
+import { IconLock, IconLockOpen, IconPhoto, IconPhotoOff, IconTrash } from '@tabler/icons-vue'
 import WeblensButton from '../atom/WeblensButton.vue'
 import type WeblensFile from '~/types/weblensFile'
 import FileIcon from '../atom/FileIcon.vue'
 import UserSearch from '../molecule/UserSearch.vue'
 import CopyBox from '../molecule/CopyBox.vue'
-import type { UserInfo } from '~/api/swag'
 import { onClickOutside } from '@vueuse/core'
+import Table from '../atom/Table.vue'
+import type { UserInfo } from '@ethanrous/weblens-api'
+import type { TableColumn, TableColumns } from '~/types/table'
 
 const menuStore = useContextMenuStore()
 
@@ -111,6 +95,69 @@ const { data: share } = useAsyncData(
     },
     { deep: false, watch: [() => props.file.Id()] },
 )
+
+const accessors = computed<TableColumns>(() => {
+    if (!share.value) {
+        return []
+    }
+
+    return share.value.accessors.map<Record<string, TableColumn>>((u) => ({
+        username: u.username,
+        canDownload: {
+            tableType: 'checkbox',
+            checked: share.value?.permissions[u.username]?.canDownload ?? false,
+            onchanged: async (c: boolean) => {
+                if (!share.value) return
+                share.value.updateAccessorPerms(u.username, {
+                    ...share.value?.permissions[u.username],
+                    canDownload: c,
+                })
+            },
+        },
+        canEdit: {
+            tableType: 'checkbox',
+            checked: share.value?.permissions[u.username]?.canEdit ?? false,
+            onchanged: async (c: boolean) => {
+                if (!share.value) return
+                share.value.updateAccessorPerms(u.username, {
+                    ...share.value?.permissions[u.username],
+                    canEdit: c,
+                })
+            },
+        },
+        canDelete: {
+            tableType: 'checkbox',
+            checked: share.value?.permissions[u.username]?.canDelete ?? false,
+            onchanged: async (c: boolean) => {
+                if (!share.value) return
+                share.value.updateAccessorPerms(u.username, {
+                    ...share.value?.permissions[u.username],
+                    canDelete: c,
+                })
+            },
+        },
+        unshare: {
+            flavor: 'danger',
+            tableType: 'button',
+            icon: IconTrash,
+            onclick: () => {
+                if (!share.value) return
+                share.value.removeAccessor(u.username)
+            },
+        },
+    }))
+})
+
+function addAccessor(user: UserInfo) {
+    if (!share.value) {
+        console.error('No share to add accessor')
+        return
+    }
+
+    console.log('Adding accessor:', user.username)
+
+    share.value.addAccessor(user.username)
+}
 
 function excludeFn(u: UserInfo) {
     if (share.value?.accessors.includes(u)) {

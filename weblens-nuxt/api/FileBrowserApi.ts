@@ -1,11 +1,10 @@
-import API_ENDPOINT from './ApiEndpoint.js'
 import type WeblensFile from '~/types/weblensFile'
 import { useUserStore } from '~/stores/user.js'
 import useLocationStore, { FbModeT } from '~/stores/location.js'
 import { WsAction, WsSubscriptionType } from '~/types/websocket.js'
-import { useWeblensApi } from './AllApi.js'
+import { API_ENDPOINT, useWeblensApi } from './AllApi.js'
 import useFilesStore from '~/stores/files.js'
-import { FilesApiAxiosParamCreator, type FolderInfo } from '@ethanrous/weblens-api'
+import { FilesApiAxiosParamCreator, type FolderInfo, type TakeoutInfo } from '@ethanrous/weblens-api'
 
 export function SubToFolder(subId: string, shareId: string) {
     if (!subId) {
@@ -25,7 +24,7 @@ export function SubToFolder(subId: string, shareId: string) {
     })
 }
 
-export function SubToTask(taskId: string, lookingFor: string[]) {
+export function SubToTask(taskId: string, lookingFor?: string[]) {
     useWebsocketStore().send({
         action: WsAction.Subscribe,
         subscriptionType: WsSubscriptionType.Task,
@@ -37,11 +36,9 @@ export function SubToTask(taskId: string, lookingFor: string[]) {
 }
 
 export function ScanDirectory(directory: WeblensFile) {
-    const shareId = useLocationStore().shareId
-
     useWebsocketStore().send({
         action: WsAction.ScanDirectory,
-        content: { folderId: directory.Id(), shareId: shareId },
+        content: { folderId: directory.Id(), shareId: useLocationStore().activeShareId },
     })
 }
 
@@ -106,21 +103,20 @@ export async function GetFolderData(
 
 export type AllowedDownloadFormats = 'webp' | 'jpeg' | 'zip'
 
-export async function downloadSingleFile(
-    fileId: string,
-    filename: string,
-    shareId: string,
-    format?: AllowedDownloadFormats,
-) {
-    const a = document.createElement('a')
-    const paramCreator = FilesApiAxiosParamCreator()
-    const args = await paramCreator.downloadFile(
+export async function downloadSingleFile(fileId: string, filename: string, format?: AllowedDownloadFormats) {
+    let formatStr: `image/${Exclude<AllowedDownloadFormats, 'zip'>}` | undefined
+    if (format && format !== 'zip') {
+        formatStr = `image/${format}`
+    }
+
+    const args = await FilesApiAxiosParamCreator().downloadFile(
         fileId,
-        shareId,
-        format ? `image/${format}` : undefined,
+        useLocationStore().activeShareId,
+        formatStr,
         format === 'zip',
     )
-    const url = API_ENDPOINT + args.url
+
+    const url = API_ENDPOINT.value + args.url
 
     if (format === 'zip') {
         filename = 'weblens_download_' + filename
@@ -128,9 +124,45 @@ export async function downloadSingleFile(
         filename = filename.split('.').slice(0, -1).join('.') + '.' + format
     }
 
+    const a = document.createElement('a')
     a.href = url
     a.download = filename
     a.click()
+
+    a.remove()
+}
+
+export async function downloadManyFiles(
+    fileIds: string[],
+): Promise<{ taskId?: string; takeoutInfo: Promise<TakeoutInfo> }> {
+    const res = await useWeblensApi().FilesApi.createTakeout(
+        {
+            fileIds: fileIds,
+        },
+        useLocationStore().activeShareId,
+    )
+
+    if (res.status === 202) {
+        const taskId = res.data.taskId
+        if (!taskId) {
+            return Promise.reject(new Error('No task ID returned for takeout creation'))
+        }
+
+        SubToTask(taskId)
+
+        return {
+            taskId: taskId,
+            takeoutInfo: new Promise<TakeoutInfo>((resolve) => {
+                useTasksStore().setTaskPromise({ resolve, taskId })
+            }),
+        }
+    } else if (res.status === 200) {
+        return {
+            takeoutInfo: Promise.resolve(res.data),
+        }
+    } else {
+        return Promise.reject(new Error(`Unexpected response status: ${res.status}`))
+    }
 }
 
 export async function moveFiles(target: WeblensFile) {
@@ -147,6 +179,6 @@ export async function moveFiles(target: WeblensFile) {
             fileIds: selectedIds,
             newParentId: target.Id(),
         },
-        useLocationStore().shareId,
+        useLocationStore().activeShareId,
     )
 }

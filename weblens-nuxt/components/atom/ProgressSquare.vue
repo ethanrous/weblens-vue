@@ -1,5 +1,9 @@
 <template>
-    <div class="relative flex shrink-0 overflow-hidden rounded transition-[height,width]">
+    <div
+        :class="{
+            'relative flex shrink-0 overflow-hidden rounded-[2px] transition-[height,width]': true,
+        }"
+    >
         <div
             :class="{
                 'gradient-progress-box': true,
@@ -10,6 +14,7 @@
         <div
             :class="{
                 'gradient-outline-box': true,
+                'border-0 !bg-transparent before:opacity-0': showOutline === false,
                 '!bg-danger/50': failed,
             }"
         />
@@ -17,14 +22,19 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+const {
+    progress = 0,
+    failed = false,
+    showOutline = true,
+} = defineProps<{
     progress?: number
     failed?: boolean
+    showOutline?: boolean
 }>()
 
 const width = computed(() => {
-    let prog = props.progress
-    if (!prog || prog < 0) {
+    let prog = progress
+    if (!prog || isNaN(prog) || prog < 0) {
         prog = 0
     } else if (prog > 100) {
         prog = 100
@@ -38,16 +48,15 @@ const width = computed(() => {
 .gradient-outline-box {
     display: flex;
     align-items: center;
-    margin: auto;
     height: 100%;
     width: 100%;
 
-    position: relative;
+    position: absolute;
     box-sizing: border-box;
 
-    background: var(--color-card-background-primary);
-    background-clip: padding-box; /* !importanté */
-    border: solid 1px transparent; /* !importanté */
+    background-color: var(--color-background-primary);
+    background-clip: padding-box;
+    border: solid 1px transparent;
     border-radius: 0.25em;
 
     &:before {
@@ -58,8 +67,9 @@ const width = computed(() => {
         bottom: 0;
         left: 0;
         z-index: -1;
-        margin: -1px; /* !importanté */
-        border-radius: inherit; /* !importanté */
+        margin: -1px;
+        border-radius: inherit;
+        display: flex;
         background: linear-gradient(130deg, var(--color-theme-primary), var(--color-bluenova-500));
     }
 }
@@ -69,5 +79,7 @@ const width = computed(() => {
     height: 100%;
     background: linear-gradient(130deg, var(--color-theme-primary), var(--color-bluenova-500));
     z-index: 2;
+
+    transition: width 150ms var(--ease-wl-default);
 }
 </style>

@@ -1,12 +1,12 @@
 <template>
     <div
         id="filebrowser-container"
-        :class="{ 'flex h-full w-full min-h-0': true }"
+        :class="{ 'flex h-full min-h-0 w-full': true }"
     >
         <FileDragCounter />
         <FileScroller
-            v-if="children && !filesStore.timeline"
-            :files="children"
+            v-if="filesStore.files && !filesStore.timeline"
+            :files="filesStore.files"
         />
         <MediaTimeline v-else-if="filesStore.timeline" />
     </div>
@@ -19,8 +19,4 @@ import MediaTimeline from '~/components/organism/MediaTimeline.vue'
 import useFilesStore from '~/stores/files'
 
 const filesStore = useFilesStore()
-
-const children = computed(() => {
-    return filesStore.children
-})
 </script>

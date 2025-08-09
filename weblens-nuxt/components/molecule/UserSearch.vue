@@ -1,20 +1,22 @@
 <template>
     <div
-        ref="inputRef"
-        :class="{ 'relative w-max': true }"
+        ref="inputContainerRef"
+        :class="{ 'relative w-full': true }"
     >
         <WeblensInput
             v-model:value="search"
             placeholder="Search Users..."
+            :class="{ 'border-b-none rounded-b-none': users?.length && focused.focused.value }"
+            @clear="search = ''"
         />
         <div
-            v-if="users?.length && focused"
-            :class="{ 'bg-card-background-secondary absolute z-10 w-full rounded p-1 shadow': true }"
+            v-if="users?.length && focused.focused.value"
+            :class="{ 'bg-background-primary border-t-none absolute z-10 w-full rounded-b border pb-1 shadow': true }"
         >
             <div
                 v-for="user in users"
                 :key="user.username"
-                :class="{ 'hover:bg-card-background-hover cursor-pointer rounded p-0.5': true }"
+                :class="{ 'hover:bg-card-background-hover cursor-pointer p-2': true }"
                 @click="emit('selectUser', user)"
             >
                 <div>
@@ -26,14 +28,14 @@
 </template>
 
 <script setup lang="ts">
+import type { UserInfo } from '@ethanrous/weblens-api'
 import WeblensInput from '../atom/WeblensInput.vue'
-import type { UserInfo } from '~/api/swag'
 import { useFocusWithin } from '@vueuse/core'
 import { useWeblensApi } from '~/api/AllApi'
 
 const search = ref<string>('')
-const inputRef = ref<HTMLInputElement>()
-const focused = useFocusWithin(inputRef.value)
+const inputContainerRef = ref<HTMLDivElement>()
+const focused = useFocusWithin(inputContainerRef)
 
 const props = defineProps<{
     excludeFn?: (user: UserInfo) => boolean
@@ -67,11 +69,7 @@ const emit = defineEmits<{
     (e: 'selectUser', value: UserInfo): void
 }>()
 
-// watchEffect(() => {
-//     if (!users.value || !props.excludeFn) {
-//         return
-//     }
-//
-//     users.value = users.value?.filter(props.excludeFn)
-// })
+watchEffect(() => {
+    console.log('focus?', focused.focused.value)
+})
 </script>

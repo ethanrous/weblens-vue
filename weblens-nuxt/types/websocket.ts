@@ -1,7 +1,11 @@
+import type { TaskType } from './task'
+
 export interface WsMessage {
     content: any
     eventTag: WsEvent
     subscribeKey: string
+    sentTime: number
+    taskType?: TaskType
     error?: string
 }
 

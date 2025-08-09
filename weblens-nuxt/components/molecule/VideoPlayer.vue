@@ -156,7 +156,7 @@ const videoUrl = computed(() => props.media.StreamVideoUrl())
 
 const { space } = useMagicKeys()
 
-watch(space, (isPressed) => {
+watch(space!, (isPressed) => {
     if (isPressed && videoRef.value) {
         handleClick()
     }

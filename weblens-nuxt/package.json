@@ -5,14 +5,16 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "generate": "nuxt generate && find ./.output/public -type f \\( -name \\*.js -o -name \\*.css \\) -exec gzip {} \\; -exec mv {}.gz {} \\;",
     "preview": "nuxt preview",
+    "lint": "prettier --config ./.prettierrc.json --check '**/**.vue' '**/**.ts' && eslint --ext .ts,.vue .",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@ethanrous/weblens-api": "0.0.2",
+    "@ethanrous/weblens-api": "0.0.3",
     "@nuxt/eslint": "1.4.1",
     "@nuxt/image": "1.10.0",
+    "@nuxt/kit": "^4.0.1",
     "@pinia/nuxt": "0.11.1",
     "@tabler/icons-vue": "^3.34.0",
     "@tailwindcss/vite": "^4.1.11",

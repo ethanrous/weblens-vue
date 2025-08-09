@@ -355,12 +355,18 @@ export function isGalleryRow(input?: GalleryRowInfo): input is GalleryRowInfo {
     return input.rowHeight !== undefined && input.rowWidth !== undefined && input.items !== undefined
 }
 
-export function GetMediaRows(medias: WeblensMedia[], baseRowHeight: number, viewWidth: number, marginSize: number) {
+export function GetMediaRows(
+    medias: WeblensMedia[],
+    baseRowHeight: number,
+    viewWidth: number,
+    marginSize: number,
+    totalMediaCount: number,
+): { rows: GalleryRowInfo[]; remainingGap: number } {
     if (medias.length === 0 || viewWidth === -1) {
-        return []
+        return { rows: [], remainingGap: 0 }
     }
 
-    medias = [...medias]
+    const mediasCpy = [...medias]
 
     const MAX_ROW_WIDTH = viewWidth
 
@@ -368,10 +374,8 @@ export function GetMediaRows(medias: WeblensMedia[], baseRowHeight: number, view
     let currentRowWidth = 0
     let currentRow: GalleryRowItem[] = []
 
-    // let absIndex = 0
-
     while (true) {
-        if (medias.length === 0) {
+        if (mediasCpy.length === 0) {
             if (currentRow.length !== 0) {
                 rows.push({
                     rowHeight: baseRowHeight,
@@ -382,7 +386,7 @@ export function GetMediaRows(medias: WeblensMedia[], baseRowHeight: number, view
             break
         }
 
-        const m = medias.shift()
+        const m = mediasCpy.shift()
 
         if (!m) {
             break
@@ -400,7 +404,7 @@ export function GetMediaRows(medias: WeblensMedia[], baseRowHeight: number, view
         const newWidth = Math.round((baseRowHeight / m.GetHeight()) * m.GetWidth()) + marginSize
 
         // If we are out of media, and the image does not overflow this row, add it and break
-        if (medias.length === 0 && !(currentRowWidth + newWidth > MAX_ROW_WIDTH)) {
+        if (mediasCpy.length === 0 && !(currentRowWidth + newWidth > MAX_ROW_WIDTH)) {
             currentRow.push({ m: m, w: newWidth })
 
             rows.push({
@@ -443,18 +447,9 @@ export function GetMediaRows(medias: WeblensMedia[], baseRowHeight: number, view
         currentRowWidth += newWidth
     }
 
-    // rows.forEach((row) => {
-    //     rowTotalMargin = row.items.length * marginSize
-    //     row.items.forEach(item => {
-    //         const preRatio = item.w /
-    //     })
-    //     const lose = (row.rowHeight / baseRowHeight) * (marginSize / 2)
-    //
-    //     row.items[0].w = row.items[0].w - lose // Remove leading margin from first item
-    //     row.items[row.items.length - 1].w = row.items[row.items.length - 1].w - lose // Remove trailing margin from last item
-    // })
-
-    return rows
+    // Add false rows to make scrollbar scale correctly
+    const firstRowLength: number = rows[0]?.items.length || 1
+    return { rows, remainingGap: baseRowHeight * ((totalMediaCount - medias.length) / firstRowLength) }
 }
 
 type MediaType = {

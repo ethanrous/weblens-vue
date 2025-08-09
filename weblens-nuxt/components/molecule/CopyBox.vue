@@ -1,7 +1,7 @@
 <template>
     <div
         :class="{
-            'bg-card-background-primary/75 inline-flex h-9 cursor-text items-center gap-1 overflow-hidden rounded border transition': true,
+            'bg-card-background-primary/75 inline-flex h-9 shrink-0 cursor-text items-center gap-1 overflow-hidden rounded border transition': true,
             'select-all': canCopy,
             'select-none': !canCopy,
             'border-green-600': copied,

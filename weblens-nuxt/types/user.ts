@@ -1,4 +1,4 @@
-import type { UserInfo } from '~/api/swag'
+import type { UserInfo } from '@ethanrous/weblens-api'
 import { Optional } from '~/util/option'
 
 export enum UserPermissions {
@@ -30,7 +30,24 @@ export default class User implements UserInfo {
         this.isLoggedIn = new Optional(isLoggedIn)
     }
 
-    public doThing() {
+    public GetPermissionLevel(): UserPermissions {
+        return this.permissionLevel as UserPermissions
+    }
 
+    public static GetPermissionLevelName(level: UserPermissions): string {
+        switch (level) {
+            case UserPermissions.Public:
+                return 'Public'
+            case UserPermissions.Basic:
+                return 'Basic'
+            case UserPermissions.Admin:
+                return 'Admin'
+            case UserPermissions.Owner:
+                return 'Owner'
+            case UserPermissions.System:
+                return 'System'
+            default:
+                return 'Unknown'
+        }
     }
 }

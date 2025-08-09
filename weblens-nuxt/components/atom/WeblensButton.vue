@@ -4,7 +4,9 @@
         :class="{
             'justify-center': centerContent || !label || justIcon,
             'aspect-square': !label || justIcon,
-            'rounded-none first:rounded-l last:rounded-r': merge === 'row',
+            'rounded-none first-of-type:rounded-l last-of-type:rounded-r': merge === 'row',
+            'rounded-none first-of-type:rounded-t last-of-type:rounded-b': merge === 'column',
+            '!p-0': !label,
         }"
         :data-flavor="flavor"
         :data-type="type"
@@ -28,7 +30,7 @@
 
         <!-- Fake text box just to measure the width -->
         <span
-            v-if="label && !justIcon"
+            v-if="label"
             ref="fakeText"
             :class="{ 'gone absolute mx-1 text-nowrap': true }"
         >
@@ -41,6 +43,9 @@
 
 <script setup lang="ts">
 import { useElementSize } from '@vueuse/core'
+import type { ButtonProps } from '~/types/button'
+
+const props = defineProps<ButtonProps>()
 
 const slots = useSlots()
 
@@ -59,23 +64,12 @@ const textWidth = computed(() => {
     return '0px'
 })
 
-const props = defineProps<{
-    label?: string
-    type?: 'default' | 'outline' | 'light'
-    flavor?: 'primary' | 'danger' | 'secondary'
-    selected?: boolean
-    danger?: boolean
-    squareSize?: number
-    fillWidth?: boolean
-    centerContent?: boolean
-    allowCollapse?: boolean
-    disabled?: boolean
-    merge?: 'row' | 'column'
-    onClick?: ((e: MouseEvent) => Promise<void>) | ((e: MouseEvent) => void)
-}>()
-
 const justIcon = computed(() => {
-    if (props.allowCollapse && slots.default && buttonSize.width.value < 60) {
+    if (
+        props.allowCollapse &&
+        slots.default &&
+        buttonSize.width.value < fakeTextSize.width.value + 24 /* Icon size without padding */
+    ) {
         return true
     }
 
@@ -89,12 +83,9 @@ async function handleClick(e: MouseEvent) {
 
     const maybePromise = props.onClick(e)
     if (maybePromise instanceof Promise) {
-        console.log('ITs a promise!')
         doingClick.value = true
         await maybePromise
         doingClick.value = false
-    } else {
-        console.log('Not a promise')
     }
 }
 </script>

@@ -2,7 +2,7 @@
     <div
         ref="containerRef"
         :class="{
-            'bg-card-background-secondary goneable absolute top-20 right-4 z-20 flex flex-col items-center overflow-hidden rounded border shadow transition-[height,width,border-radius,opacity] duration-300 ease-out': true,
+            'bg-background-primary goneable absolute top-18 right-2 z-20 flex flex-col items-center overflow-hidden rounded border shadow-md transition-[height,width,border-radius,opacity] duration-300 ease-out': true,
             gone: uploads.length === 0,
             'w-72': open,
             'w-56': !open,
@@ -14,7 +14,7 @@
     >
         <div
             :class="{
-                'bg-card-background-secondary border-border-secondary z-10 flex h-[30px] w-full shrink-0 items-center border-b pl-2 transition-[border] duration-300': true,
+                'z-10 flex w-full shrink-0 items-center border-b py-1 pl-2 transition-[border] duration-300': true,
                 'border-b-transparent': !open,
             }"
         >
@@ -32,7 +32,7 @@
 
         <div
             :class="{
-                'goneable box-border flex w-full max-w-full min-w-0 flex-col overflow-y-auto transition-[height,width,margin,opacity,padding] duration-[inherit]': true,
+                'goneable no-scrollbar box-border flex w-full max-w-full min-w-0 flex-col overflow-y-auto transition-[height,width,margin,opacity,padding] duration-[inherit]': true,
                 'h-max py-1 opacity-100': open,
                 'gone m-0': !open,
             }"
@@ -87,7 +87,7 @@ const totalProgress = computed((prev?: { percent: number; soFar: string; total: 
 })
 
 const height = computed(() => {
-    return open.value ? `${Math.min(uploadStore.uploads.size * 80, window.innerHeight * 0.5) + 48}px` : '2rem'
+    return open.value ? `${Math.min(uploadStore.uploads.size * 80, window.innerHeight * 0.5) + 56}px` : '2.5rem'
 })
 
 const uploads = computed(() => {

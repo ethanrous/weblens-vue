@@ -3,21 +3,31 @@ import { SubToFolder, UnsubFromFolder } from '~/api/FileBrowserApi'
 import WeblensFile from '~/types/weblensFile'
 import useLocationStore from './location'
 import { onWatcherCleanup } from 'vue'
-import type { FileInfo, FolderInfo } from '~/api/swag'
 import type { AxiosResponse } from 'axios'
-import WeblensShare from '~/types/weblensShare'
 import WeblensMedia from '~/types/weblensMedia'
 import { useWeblensApi } from '~/api/AllApi'
 import { useStorage } from '@vueuse/core'
+import type { FileInfo, FolderInfo } from '@ethanrous/weblens-api'
 
 type sorterFunc = (f1: WeblensFile, f2: WeblensFile) => number
 
-type folderSettings = {
-    sortCondition: 'date' | 'filename' | 'size'
-    sortDirection: 1 | -1
+export type FileShape = 'square' | 'row' | 'column'
+export type SortCondition = 'date' | 'filename' | 'size'
+type SortDirection = 1 | -1
+
+type FolderSettings = {
+    sortCondition: SortCondition
+    sortDirection: SortDirection
+    fileShape: FileShape
 }
 
-function getSortFunc(sortCondition: string, sortDirection: 1 | -1): sorterFunc {
+const folderSettingsDefault: FolderSettings = {
+    sortCondition: 'date',
+    sortDirection: 1,
+    fileShape: 'square',
+}
+
+function getSortFunc(sortCondition: SortCondition, sortDirection: 1 | -1): sorterFunc {
     console.debug('Sorting files by', sortCondition, 'in direction', sortDirection)
 
     switch (sortCondition) {
@@ -31,15 +41,15 @@ function getSortFunc(sortCondition: string, sortDirection: 1 | -1): sorterFunc {
                 return (f1.GetModified().getTime() - f2.GetModified().getTime()) * sortDirection
             }
         }
+        case 'size': {
+            return (f1, f2) => {
+                return (f1.GetSize() - f2.GetSize()) * sortDirection
+            }
+        }
     }
-
-    return (_, __) => 0
 }
 
 const useFilesStore = defineStore('files', () => {
-    // Global //
-    const route = useRoute()
-
     // External //
     const userStore = useUserStore()
     const locationStore = useLocationStore()
@@ -47,55 +57,29 @@ const useFilesStore = defineStore('files', () => {
     const user = computed(() => userStore.user)
 
     // Local State //
+    const children = shallowRef<WeblensFile[]>()
+
     const selectedFiles = ref<Set<string>>(new Set())
     const movedFiles = ref<Set<string>>(new Set())
-    const children = shallowRef<WeblensFile[]>()
+
     const lastSelected = ref<string | null>(null)
-    const sortDirection = ref<1 | -1>(1)
-    const sortCondition = ref<'date' | 'filename' | 'size'>('filename')
+    const nextSelectedIndex = ref<number | null>(null) // This is used to track the next file to be selected when using shift-click
+
+    const sortDirection = ref<SortDirection>(1)
+    const sortCondition = ref<SortCondition>('filename')
+
+    const fileShape = ref<FileShape>('square')
+
     const dragging = ref<boolean>(false)
 
-    const foldersSettings = useStorage('wl-folders-settings', {} as Record<string, folderSettings>)
+    const foldersSettings = useStorage('wl-folders-settings', {} as Record<string, FolderSettings>)
 
-    const activeFolderId = computed(() => {
-        let fileId = route.params.fileId
-        if (fileId === 'home') {
-            fileId = user.value.homeId
-        }
+    const fileSearch = ref<string>('')
+    const searchRecurively = ref<boolean>(false)
 
-        if (fileId === 'trash') {
-            fileId = user.value.trashId
-        }
+    const searchUpToDate = ref<boolean>(true)
 
-        return fileId as string
-    })
-
-    const activeShareId = computed(() => {
-        return route.params.shareId as string | undefined
-    })
-
-    const isInShare = computed(() => {
-        return (route.name as string | undefined)?.startsWith('files-share') ?? false
-    })
-
-    const timeline = computed(() => {
-        return route.query['timeline'] === 'true'
-    })
-
-    const { data: activeShare } = useAsyncData('share-' + route.params.shareId, async () => {
-        if (!route.params.shareId) {
-            return
-        }
-
-        if (Array.isArray(route.params.shareId)) {
-            console.warn('ShareId param is array')
-            return
-        }
-
-        const shareInfo = (await useWeblensApi().SharesApi.getFileShare(route.params.shareId)).data
-
-        return new WeblensShare(shareInfo)
-    })
+    const loading = ref<boolean>(false)
 
     function getSortedChildren(newChildren?: WeblensFile[]): WeblensFile[] | undefined {
         if (!children.value && !newChildren) {
@@ -113,17 +97,20 @@ const useFilesStore = defineStore('files', () => {
     }
 
     const { data, error, status } = useAsyncData(
-        'files-' + activeFolderId.value,
+        'files-' + locationStore.activeFolderId,
         async () => {
-            if (!user.value.isLoggedIn.isSet() || !activeFolderId.value) {
+            if (!user.value.isLoggedIn.isSet() || !locationStore.activeFolderId) {
                 return {}
             }
 
             let res: AxiosResponse<FolderInfo, FolderInfo>
-            if (isInShare.value && !activeShareId.value) {
+            if (locationStore.isInShare && !locationStore.activeShareId) {
                 res = await useWeblensApi().FilesApi.getSharedFiles()
             } else {
-                res = await useWeblensApi().FoldersApi.getFolder(activeFolderId.value, activeShareId.value)
+                res = await useWeblensApi().FoldersApi.getFolder(
+                    locationStore.activeFolderId,
+                    locationStore.activeShareId,
+                )
             }
 
             if (!res.data.self || !res.data.children) {
@@ -164,7 +151,7 @@ const useFilesStore = defineStore('files', () => {
             const activeFile = new WeblensFile(res.data.self)
             return { activeFile: activeFile, children: newChildren, parents }
         },
-        { watch: [user, activeFolderId], lazy: true },
+        { watch: [user, () => locationStore.activeFolderId], lazy: true },
     )
 
     // Funcs //
@@ -178,6 +165,10 @@ const useFilesStore = defineStore('files', () => {
         }
 
         selectedFiles.value = new Set(selectedFiles.value)
+    }
+
+    function setNextSelectedIndex(index: number) {
+        nextSelectedIndex.value = index
     }
 
     function selectAll() {
@@ -197,7 +188,7 @@ const useFilesStore = defineStore('files', () => {
             return undefined
         }
 
-        if (id === activeFolderId.value) {
+        if (id === locationStore.activeFolderId) {
             return activeFile.value
         }
 
@@ -209,7 +200,7 @@ const useFilesStore = defineStore('files', () => {
             return
         }
 
-        if (file.parentId !== activeFolderId.value) {
+        if (file.parentId !== locationStore.activeFolderId) {
             return
         }
 
@@ -233,7 +224,7 @@ const useFilesStore = defineStore('files', () => {
         const newChildren = children.value
 
         for (const fileId of fileIds) {
-            if (fileId === activeFolderId.value) {
+            if (fileId === locationStore.activeFolderId) {
                 console.warn('Cannot remove the active folder')
                 continue
             }
@@ -263,41 +254,80 @@ const useFilesStore = defineStore('files', () => {
     }
 
     function initFolderSettings() {
-        if (foldersSettings.value[activeFolderId.value]) {
+        if (foldersSettings.value[locationStore.activeFolderId]) {
             return
         }
 
-        foldersSettings.value[activeFolderId.value] = {
-            sortCondition: 'date',
-            sortDirection: 1,
+        foldersSettings.value[locationStore.activeFolderId] = { ...folderSettingsDefault }
+    }
+
+    function saveFoldersSettings() {
+        initFolderSettings()
+
+        foldersSettings.value[locationStore.activeFolderId] = {
+            sortCondition: sortCondition.value,
+            sortDirection: sortDirection.value,
+            fileShape: fileShape.value,
         }
+
+        console.log('Saving folders settings', foldersSettings.value[locationStore.activeFolderId])
     }
 
     function toggleSortDirection() {
         sortDirection.value *= -1
 
-        initFolderSettings()
-        foldersSettings.value[activeFolderId.value].sortDirection = sortDirection.value as 1 | -1
+        saveFoldersSettings()
+    }
+
+    function setFileShape(newFileShape: FileShape) {
+        console.log('Setting file shape to', newFileShape)
+        fileShape.value = newFileShape
+
+        saveFoldersSettings()
     }
 
     function setSortCondition(newSortCondition: 'date' | 'filename' | 'size') {
         sortCondition.value = newSortCondition
 
-        initFolderSettings()
-        foldersSettings.value[activeFolderId.value].sortCondition = sortCondition.value
-    }
-
-    function setTimeline(timeline: boolean) {
-        navigateTo({
-            query: {
-                ...route.query,
-                timeline: String(timeline),
-            },
-        })
+        saveFoldersSettings()
     }
 
     function setDragging(newDragging: boolean) {
         dragging.value = newDragging
+    }
+
+    function setFileSearch(search: string) {
+        fileSearch.value = search
+        searchUpToDate.value = false
+    }
+
+    function setSearchRecurively(recursive: boolean) {
+        searchRecurively.value = recursive
+    }
+
+    function setLoading(load: boolean) {
+        loading.value = load
+    }
+
+    const searchResults = shallowRef<WeblensFile[] | undefined>()
+
+    async function doSearch() {
+        if (!fileSearch.value || fileSearch.value.trim() === '') {
+            searchResults.value = undefined
+            return
+        }
+
+        loading.value = true
+
+        const res = await useWeblensApi().FilesApi.searchByFilename(fileSearch.value, locationStore.activeFolderId)
+        const results = res.data.map((f) => {
+            return new WeblensFile(f)
+        })
+
+        searchResults.value = getSortedChildren(results) ?? []
+
+        searchUpToDate.value = true
+        loading.value = false
     }
 
     // Computed Properties //
@@ -318,71 +348,76 @@ const useFilesStore = defineStore('files', () => {
 
     // When the active folder changes, clear selected files and reinitialize folder settings
     watch(
-        activeFolderId,
+        () => locationStore.activeFolderId,
         () => {
             selectedFiles.value = new Set()
+            fileSearch.value = ''
+            searchResults.value = undefined
+            searchUpToDate.value = false
 
             initFolderSettings()
-            console.log('Active folder changed, initializing settings', foldersSettings.value[activeFolderId.value])
-            sortCondition.value = foldersSettings.value[activeFolderId.value]?.sortCondition ?? 'date'
-            sortDirection.value = foldersSettings.value[activeFolderId.value]?.sortDirection ?? 1
+            console.log(
+                'Active folder changed, initializing settings',
+                foldersSettings.value[locationStore.activeFolderId],
+            )
+            sortCondition.value = foldersSettings.value[locationStore.activeFolderId]?.sortCondition ?? 'date'
+            sortDirection.value = foldersSettings.value[locationStore.activeFolderId]?.sortDirection ?? 1
+            fileShape.value = foldersSettings.value[locationStore.activeFolderId]?.fileShape ?? 'square'
         },
         { immediate: true },
     )
 
     watchEffect(() => {
-        const _activeFolderId = activeFolderId.value
-        SubToFolder(_activeFolderId, locationStore.shareId)
+        const _activeFolderId = locationStore.activeFolderId
+        SubToFolder(_activeFolderId, locationStore.activeShareId)
 
         onWatcherCleanup(() => {
             UnsubFromFolder(_activeFolderId)
         })
     })
 
-    const isInFiles = computed(() => {
-        return (route.name as string | undefined)?.startsWith('files') ?? false
-    })
-
-    watchEffect(() => {
-        if (!isInFiles.value) return
-
-        const loggedIn = userStore.user.isLoggedIn
-        if ((!isInShare.value || !activeShareId.value) && loggedIn.isSet() && !loggedIn.get()) {
-            console.warn('User is not logged in and not in share, redirecting to login page')
-
-            return navigateTo({ path: '/login' })
+    const files = computed(() => {
+        if (searchResults.value !== undefined) {
+            return searchResults.value
         }
 
-        if (isInShare.value && activeShare.value && !route.params.fileId) {
-            return navigateTo({
-                path: `/files/share/${activeShareId.value}/${activeShare.value?.fileId}`,
-                query: route.query,
+        if (!children.value) {
+            return []
+        }
+
+        let files = children.value
+        if (fileSearch.value !== '' && !searchRecurively.value) {
+            const search = fileSearch.value.toLowerCase()
+
+            files = files.filter((f) => {
+                return f.GetFilename().toLowerCase().includes(search)
             })
         }
+
+        return files
     })
 
     return {
-        activeFolderId,
+        files,
+
         activeFile,
 
         dragging,
-
-        activeShareId,
-        activeShare,
-        isInShare,
-
-        timeline,
-        setTimeline,
 
         children,
         parents,
         status,
         error,
 
+        loading,
+        setLoading,
+
         movedFiles,
         selectedFiles,
 
         lastSelected,
+        nextSelectedIndex,
+        setNextSelectedIndex,
 
         addFile,
         removeFiles,
@@ -393,12 +428,23 @@ const useFilesStore = defineStore('files', () => {
         selectAll,
         clearSelected,
 
+        fileShape,
+        setFileShape,
+
         sortDirection,
         sortCondition,
         toggleSortDirection,
         setSortCondition,
 
         setDragging,
+
+        fileSearch,
+        setFileSearch,
+        searchRecurively,
+        setSearchRecurively,
+        searchResults,
+        searchUpToDate,
+        doSearch,
     }
 })
 

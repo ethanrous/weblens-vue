@@ -15,11 +15,11 @@
         </div>
 
         <FileScroller
-            v-else-if="children && !filesStore.timeline"
-            :files="children"
+            v-else-if="filesStore.files && !locationStore.isInTimeline"
+            :files="filesStore.files"
         />
 
-        <MediaTimeline v-else-if="filesStore.timeline" />
+        <MediaTimeline v-else-if="locationStore.isInTimeline" />
     </div>
 </template>
 
@@ -29,15 +29,10 @@ import FileDragCounter from '~/components/organism/FileDragCounter.vue'
 import FileScroller from '~/components/organism/FileScroller.vue'
 import MediaTimeline from '~/components/organism/MediaTimeline.vue'
 import useFilesStore from '~/stores/files'
+import useLocationStore from '~/stores/location'
 
 const filesStore = useFilesStore()
-const userStore = useUserStore()
-
-const children = computed(() => {
-    return filesStore.children?.filter((file) => {
-        return file && file.id !== userStore.user?.trashId
-    })
-})
+const locationStore = useLocationStore()
 
 const isLoading = computed(() => {
     return filesStore.children === undefined || filesStore.status === 'pending' || filesStore.status === 'idle'

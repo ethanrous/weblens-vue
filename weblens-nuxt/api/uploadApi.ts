@@ -1,8 +1,9 @@
 import type { AxiosProgressEvent } from 'axios'
 
-import type { NewFileParams } from './swag/api.js'
 import type { FileUploadMetadata } from '~/types/uploadTypes'
 import { useWeblensApi } from './AllApi'
+import WeblensFile from '~/types/weblensFile.js'
+import type { NewFileParams } from '@ethanrous/weblens-api'
 
 const MAX_RETRIES = 5
 
@@ -331,6 +332,11 @@ export async function HandleDrop(
         .map((item) => item.webkitGetAsEntry())
         .filter((item) => item !== null)
 
+    if (files.length === 0) {
+        console.error('No valid files or directories to upload')
+        return
+    }
+
     const uploads = files.map((file) => {
         const localUploadId = window.crypto.randomUUID()
 
@@ -366,6 +372,11 @@ export async function HandleDrop(
 
         for (const [index, file] of files.entries()) {
             const upload = uploads[index]
+            if (!upload) {
+                console.error('No upload metadata found for file:', file.name)
+                continue
+            }
+
             useUploadStore().setServerUpload(upload.localUploadId, uploadId)
 
             try {
@@ -379,6 +390,152 @@ export async function HandleDrop(
             }
         }
     })
+}
+
+export async function HandleFileSelect(files: FileList, rootFolderId: string, isPublic: boolean, shareId: string) {
+    if (!files || files.length === 0) {
+        console.error('No files selected for upload')
+        return
+    }
+
+    const dirs: Map<string, WeblensFile> = new Map()
+    const uploads: FileUploadMetadata[] = []
+
+    for (const file of files) {
+        let parentId: string = rootFolderId
+
+        if (file.webkitRelativePath !== '') {
+            const pathParts = file.webkitRelativePath.split('/')
+            for (const [index, pathPart] of pathParts.slice(0, -1).entries()) {
+                const dirPath = pathParts.slice(0, index + 1).join('/')
+                const existingDir = dirs.get(dirPath)
+                if (existingDir) {
+                    parentId = existingDir.id
+                    continue
+                }
+
+                let parentDirId: string | undefined = undefined
+                if (index === 0) {
+                    parentDirId = rootFolderId
+                } else {
+                    parentDirId = dirs.get(pathParts.slice(0, index).join('/'))?.id
+                }
+
+                if (!parentDirId) {
+                    console.error('Parent directory not found for:', dirPath)
+                    return
+                }
+
+                const createRes = await useWeblensApi().FoldersApi.createFolder({
+                    parentFolderId: parentDirId,
+                    newFolderName: pathPart,
+                })
+
+                const newDir = new WeblensFile(createRes.data)
+
+                dirs.set(dirPath, newDir)
+                parentId = newDir.id
+            }
+        }
+
+        uploads.push({
+            file: file,
+            isDir: false,
+            parentId: parentId,
+            chunks: {},
+            isTopLevel: parentId === rootFolderId,
+            uploadId: '',
+        })
+    }
+
+    if (dirs.size > 0) {
+        const baseDirName = dirs.keys().find((dirPath) => {
+            return !dirPath.includes('/')
+        })
+        if (!baseDirName) {
+            console.error('No base directory found for uploads', dirs)
+            return
+        }
+
+        const baseDir = dirs.get(baseDirName)
+        const localUploadId = window.crypto.randomUUID()
+
+        useUploadStore().startUpload({
+            localUploadId,
+            name: baseDir?.GetFilename(),
+            type: 'folder',
+        })
+
+        await useUploadStore().uploadTaskQueue.addTask(async () => {
+            const res = await useWeblensApi()
+                .FilesApi.startUpload(
+                    {
+                        rootFolderId: rootFolderId,
+                        chunkSize: 1, // TODO: remove this
+                    },
+                    shareId,
+                )
+                .catch((err) => {
+                    console.error('Failed to start upload:', err)
+                })
+
+            if (!res) {
+                throw new Error('Failed to start upload: no response')
+            }
+
+            const uploadId = res.data.uploadId
+
+            if (!uploadId) {
+                throw new Error('Failed to start upload: no uploadId returned')
+            }
+
+            try {
+                await tryUpload(uploads, isPublic, shareId, uploadId, localUploadId)
+            } catch (err) {
+                useUploadStore().failUpload(localUploadId, Error(String(err)))
+            }
+        })
+    } else {
+        for (const upload of uploads) {
+            const localUploadId = window.crypto.randomUUID()
+
+            useUploadStore().startUpload({
+                localUploadId: localUploadId,
+                name: upload.file?.name || 'Unknown File',
+                type: 'file',
+            })
+
+            await useUploadStore().uploadTaskQueue.addTask(async () => {
+                const res = await useWeblensApi()
+                    .FilesApi.startUpload(
+                        {
+                            rootFolderId: rootFolderId,
+                            chunkSize: 1, // TODO: remove this
+                        },
+                        shareId,
+                    )
+                    .catch((err) => {
+                        console.error('Failed to start upload:', err)
+                    })
+
+                if (!res) {
+                    throw new Error('Failed to start upload: no response')
+                }
+
+                const uploadId = res.data.uploadId
+
+                if (!uploadId) {
+                    throw new Error('Failed to start upload: no uploadId returned')
+                }
+
+                try {
+                    await tryUpload([upload], isPublic, shareId, uploadId, localUploadId)
+                } catch (err) {
+                    useUploadStore().failUpload(localUploadId, Error(String(err)))
+                }
+            })
+        }
+    }
 }
 
 export default upload

@@ -1,9 +1,9 @@
-import type { MediaInfo, MediaTypeInfo } from '@/api/swag'
 import { defineStore } from 'pinia'
-import useFilesStore from './files'
 import WeblensMedia from '~/types/weblensMedia'
 import type { ShallowRef } from 'vue'
 import { useWeblensApi } from '~/api/AllApi'
+import type { MediaInfo, MediaTypeInfo } from '@ethanrous/weblens-api'
+import useLocationStore from './location'
 
 export const TIMELINE_PAGE_SIZE = 200
 export const TIMELINE_IMAGE_MIN_SIZE = 150
@@ -19,14 +19,18 @@ export const useMediaStore = defineStore('media', () => {
     const timelineSortDirection = ref<1 | -1>(1) // 1 for ascending, -1 for descending
     const timelineImageSize = ref<number>(200)
 
-    const filesStore = useFilesStore()
+    const locationStore = useLocationStore()
+
+    const imageSearch = ref<string>('')
 
     const showRaw = computed(() => {
-        return route.query['raw'] === 'true'
+        return route.query['raw'] !== 'false'
     })
 
-    async function fetchMoreMedia(pageNum: number): Promise<{ medias: WeblensMedia[]; canLoadMore: boolean }> {
-        if (!filesStore.timeline) {
+    async function fetchMoreMedia(
+        pageNum: number,
+    ): Promise<{ medias: WeblensMedia[]; totalMedias: number; canLoadMore: boolean }> {
+        if (!locationStore.isInTimeline) {
             return Promise.reject('not in timeline')
         }
 
@@ -39,14 +43,19 @@ export const useMediaStore = defineStore('media', () => {
                     sortDirection: timelineSortDirection.value,
                     page: pageNum,
                     limit: TIMELINE_PAGE_SIZE,
-                    folderIds: [filesStore.activeFolderId],
+                    folderIds: [locationStore.activeFolderId],
+                    search: imageSearch.value,
                 },
-                filesStore.activeShareId,
+                locationStore.activeShareId,
             )
             .then((res) => {
                 const medias = res.data.Media?.map((m) => new WeblensMedia(m)) ?? []
                 medias.forEach((m) => media.value.set(m.contentId, m))
-                return { medias, canLoadMore: medias.length === TIMELINE_PAGE_SIZE }
+                return {
+                    medias,
+                    totalMedias: res.data.mediaCount ?? 0,
+                    canLoadMore: medias.length === TIMELINE_PAGE_SIZE,
+                }
             })
     }
 
@@ -98,16 +107,22 @@ export const useMediaStore = defineStore('media', () => {
         })
     }
 
+    function setImageSearch(search: string) {
+        imageSearch.value = search
+    }
+
     return {
         media,
         mediaTypeMap,
         timelineImageSize,
         timelineSortDirection,
         showRaw,
+        imageSearch,
         addMedia,
         fetchMoreMedia,
         toggleSortDirection,
         updateImageSize,
         setShowRaw,
+        setImageSearch,
     }
 })

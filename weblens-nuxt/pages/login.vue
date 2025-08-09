@@ -22,14 +22,14 @@
                 "
             >
                 <WeblensInput
-                    v-model="username"
+                    v-model:value="username"
                     placeholder="Username"
                     auto-focus
                     square-size="{44}"
                     auto-complete="username"
                 />
                 <WeblensInput
-                    v-model="password"
+                    v-model:value="password"
                     placeholder="Password"
                     square-size="{44}"
                     password

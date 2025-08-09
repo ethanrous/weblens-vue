@@ -7,10 +7,12 @@
             <NuxtPage />
             <PathCrumbs />
         </div>
+        <WebsocketStatus :class="{ 'absolute right-4 bottom-4 hidden sm:block': true }" />
     </div>
 </template>
 
 <script setup lang="ts">
+import WebsocketStatus from '~/components/molecule/WebsocketStatus.vue'
 import FileHeader from '~/components/organism/FileHeader.vue'
 import PathCrumbs from '~/components/organism/PathCrumbs.vue'
 import Presentation from '~/components/organism/Presentation.vue'

@@ -1,5 +1,4 @@
-import type { UserInfo } from '@/api/swag'
-import { defineStore } from 'pinia'
+import type { UserInfo } from '@ethanrous/weblens-api'
 import { useWeblensApi } from '~/api/AllApi'
 import User from '~/types/user'
 
@@ -23,9 +22,14 @@ export const useUserStore = defineStore('user', () => {
         console.log('Loading user info...', user.value)
     }
 
+    async function logout(): Promise<void> {
+        await useWeblensApi().UsersApi.logoutUser()
+        await navigateTo('/login')
+    }
+
     onMounted(() => {
         loadUser()
     })
 
-    return { user, setUser }
+    return { user, setUser, logout }
 })

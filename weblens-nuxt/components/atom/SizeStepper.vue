@@ -14,8 +14,8 @@
             <div
                 :class="{
                     'w-2 cursor-pointer group-hover:scale-[1.1]': true,
-                    'bg-aurora-400': index <= (hoverStep ?? activeStep),
-                    'bg-card-background-secondary': index > (hoverStep ?? activeStep),
+                    'bg-text-secondary': index <= (hoverStep ?? activeStep),
+                    'bg-background-hover': index > (hoverStep ?? activeStep),
                 }"
                 :style="{
                     height: `${stepSizes[index]}px`,

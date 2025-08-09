@@ -3,84 +3,96 @@
         v-if="media"
         ref="presentation"
         :class="{
-            'presentation fullscreen-modal flex-col justify-end max-sm:p-4 sm:flex-row sm:justify-around': true,
+            'presentation fullscreen-modal flex-col justify-end sm:flex-row sm:justify-around': true,
         }"
         @click.stop="presentationStore.clearPresentation"
     >
-        <VideoPlayer
-            v-if="media.IsVideo()"
-            :media="media"
-        />
-
-        <PDF
-            v-else-if="media.IsPdf()"
-            :media="media"
-        />
-
-        <MediaImage
-            v-else-if="media"
-            :media="media"
-            :quality="PhotoQuality.HighRes"
-            :class="{ 'h-max min-w-0 max-sm:my-auto max-sm:!max-h-max': true }"
-            :style="{
-                height: `calc(${presentationSize.height.value}px - 1rem)`,
-                maxHeight: `calc(${presentationSize.height.value}px - 1rem)`,
-                maxWidth: presentationSize.width.value + 'px',
-            }"
-            :contain="true"
-            no-click
-        />
-
-        <div
-            v-else-if="presentingFile?.IsFolder()"
-            :class="{
-                'flex h-full w-max min-w-max items-center justify-center gap-4': true,
-            }"
-        >
-            <IconFolder
-                size="10%"
-                stroke="1"
+        <div :class="{ 'relative flex h-full w-full': true }">
+            <VideoPlayer
+                v-if="media.IsVideo()"
+                :media="media"
             />
-            <h1>{{ presentingFile.GetFilename() }}</h1>
-        </div>
 
-        <div
-            :class="{
-                'relative mb-[15%] inline-flex h-max max-h-max max-w-full flex-col items-center transition-[width] sm:mb-0 sm:ml-4 sm:max-w-[25%] sm:items-start': true,
-                'w-full min-w-min grow': fileInfoOpen,
-                'w-0 min-w-0 overflow-hidden': !fileInfoOpen,
-            }"
-        >
-            <h3 v-if="presentingFile">{{ presentingFile?.GetFilename() }}</h3>
-            <CopyBox
-                v-if="media"
-                :class="{
-                    'relative mt-12 mb-2 w-full min-w-0 overflow-x-auto': true,
+            <PDF
+                v-else-if="media.IsPdf()"
+                :media="media"
+            />
+
+            <MediaImage
+                v-else-if="media"
+                :media="media"
+                :quality="PhotoQuality.HighRes"
+                :class="{ 'min-w-0 p-2 max-sm:my-auto lg:p-0': true }"
+                :style="{
+                    height: `calc(${presentationSize.height.value}px - 1rem)`,
+                    maxHeight: `calc(${presentationSize.height.value}px - 1rem)`,
+                    maxWidth: presentationSize.width.value + 'px',
                 }"
-                :text="media.MediaUrl()"
-            >
-                <IconPhoto
-                    size="20"
-                    :class="{ 'shrink-0': true }"
-                />
-            </CopyBox>
+                :contain="true"
+                no-click
+            />
 
-            <Mapbox
-                v-if="media.location && media.location[0] !== 0"
-                :coords="media.location"
-                :class="{ 'h-98 w-full': true }"
+            <div
+                v-else-if="presentingFile?.IsFolder()"
+                :class="{
+                    'flex h-full w-max min-w-max items-center justify-center gap-4': true,
+                }"
+            >
+                <IconFolder
+                    size="10%"
+                    stroke="1"
+                />
+                <h1>{{ presentingFile.GetFilename() }}</h1>
+            </div>
+
+            <div
+                :class="{
+                    'absolute flex h-full max-w-full shrink-0 flex-col items-center justify-center overflow-hidden transition-[width,height,margin] duration-300 lg:relative lg:mb-0 lg:ml-4': true,
+                    'w-full p-4 backdrop-blur-xs lg:w-1/3 lg:p-0 lg:backdrop-blur-none': fileInfoOpen,
+                    'pointer-events-none opacity-0 lg:w-0 lg:opacity-100': !fileInfoOpen,
+                }"
+            >
+                <h3 v-if="presentingFile">{{ presentingFile?.GetFilename() }}</h3>
+                <CopyBox
+                    v-if="media"
+                    :class="{
+                        'relative mb-2 w-full min-w-0 overflow-x-auto': true,
+                    }"
+                    :text="media.MediaUrl()"
+                >
+                    <IconPhoto
+                        size="20"
+                        :class="{ 'shrink-0': true }"
+                    />
+                </CopyBox>
+
+                <Mapbox
+                    v-if="media.location && media.location[0] !== 0"
+                    :coords="media.location"
+                    :class="{ 'h-98 w-full': true }"
+                />
+            </div>
+
+            <IconInfoCircle
+                :class="{
+                    'absolute top-4 right-4 shrink-0 cursor-pointer rounded p-0.5 transition': true,
+                    'bg-card-background-primary/50 text-text-primary': fileInfoOpen,
+                    'text-text-secondary': !fileInfoOpen,
+                }"
+                size="20"
+                @click.stop="fileInfoOpen = !fileInfoOpen"
+            />
+            <IconArrowLeft
+                :class="{ 'bg-card-background-primary/50 absolute bottom-10 left-10 m-2 rounded p-1 sm:hidden': true }"
+                size="32"
+                @click.stop="movePresentation(-1)"
+            />
+            <IconArrowRight
+                :class="{ 'bg-card-background-primary/50 absolute right-10 bottom-10 m-2 rounded p-1 sm:hidden': true }"
+                size="32"
+                @click.stop="movePresentation(1)"
             />
         </div>
-
-        <IconInfoCircle
-            :class="{
-                'absolute top-4 right-4 shrink-0 cursor-pointer rounded p-0.5 transition': true,
-                'bg-card-background-primary/50 text-text-primary': fileInfoOpen,
-                'text-text-secondary': !fileInfoOpen,
-            }"
-            size="20"
-            @click.stop="fileInfoOpen = !fileInfoOpen"
-        />
     </div>
 </template>
 
@@ -89,7 +101,7 @@ import useFilesStore from '~/stores/files'
 import MediaImage from '../atom/MediaImage.vue'
 import WeblensMedia, { PhotoQuality } from '~/types/weblensMedia'
 import { onKeyStroke, onKeyUp, useElementSize } from '@vueuse/core'
-import { IconFolder, IconInfoCircle, IconPhoto } from '@tabler/icons-vue'
+import { IconArrowLeft, IconArrowRight, IconFolder, IconInfoCircle, IconPhoto } from '@tabler/icons-vue'
 import CopyBox from '../molecule/CopyBox.vue'
 import VideoPlayer from '../molecule/VideoPlayer.vue'
 import PDF from '../atom/PDF.vue'
@@ -147,7 +159,12 @@ function movePresentation(direction: number) {
         return
     }
 
-    const newId = filesStore.children[presentingIndex + direction].id
+    const newId = filesStore.children[presentingIndex + direction]?.id
+    if (!newId) {
+        console.error('No newId', presentingIndex, direction, filesStore.children)
+        return
+    }
+
     presentationStore.setPresentationFileId(newId)
 }
 

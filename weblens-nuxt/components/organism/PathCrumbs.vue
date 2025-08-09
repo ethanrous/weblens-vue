@@ -46,8 +46,10 @@ import useFilesStore from '~/stores/files'
 import WeblensFile from '~/types/weblensFile'
 import FileIcon from '../atom/FileIcon.vue'
 import { moveFiles } from '~/api/FileBrowserApi'
+import useLocationStore from '~/stores/location'
 
 const filesStore = useFilesStore()
+const locationStore = useLocationStore()
 
 const crumbFiles = computed(() => {
     let files: WeblensFile[] = []
@@ -60,7 +62,7 @@ const crumbFiles = computed(() => {
         files.push(filesStore.activeFile)
     }
 
-    if (filesStore.isInShare) {
+    if (locationStore.isInShare) {
         files.unshift(WeblensFile.ShareRoot())
     }
 

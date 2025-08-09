@@ -12,7 +12,10 @@
             v-else
             :class="{ 'flex flex-row': true }"
         >
-            <IconFileSad size="200" />
+            <IconFileSad
+                size="200"
+                :stroke="'2'"
+            />
             <div :class="{ 'relative ml-12 flex w-max flex-col overflow-y-auto': true }">
                 <h2 :class="{ 'block text-nowrap': true }">Well... thats not good</h2>
                 <h6 :class="{ 'absolute mt-12 w-full': true }">

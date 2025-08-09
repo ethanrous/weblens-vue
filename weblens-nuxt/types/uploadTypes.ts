@@ -87,7 +87,7 @@ export function addRate(upload: UploadInfo) {
     upload.rate.push({ totalBytes: upload.uploadedSoFar, time: Date.now() })
     while (
         upload.rate[upload.rate.length - 1].time - upload.rate[0].time >
-        1000 /* Always keep samples from last 10 seconds */
+        10000 /* Always keep samples from last 10 seconds */
     ) {
         upload.rate.shift()
     }

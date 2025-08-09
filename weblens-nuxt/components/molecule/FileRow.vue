@@ -1,7 +1,7 @@
 <template>
     <div
         :class="{
-            'border-card-background-primary flex aspect-square h-full w-full cursor-pointer flex-col rounded border transition': true,
+            'border-card-background-primary relative flex h-full w-full cursor-pointer rounded border transition': true,
             'border-card-background-selected bg-card-background-selected': fileState.Has(SelectedState.Selected),
             'hover:bg-card-background-selected/50 hover:border-theme-primary hover:border': fileState.Has(
                 SelectedState.Hovering,
@@ -10,31 +10,27 @@
             'bg-card-background-disabled !text-text-tertiary pointer-events-none': fileState.Has(SelectedState.Moved),
         }"
     >
-        <div
-            :class="{
-                'flex aspect-square h-full min-h-0 w-full min-w-0 items-center p-1.5 transition-[padding] sm:p-3': true,
-            }"
-        >
-            <div :class="{ 'h-full w-full overflow-hidden rounded': true }">
+        <div :class="{ 'p-1.5': true }">
+            <div :class="{ 'aspect-square h-full overflow-hidden rounded': true }">
                 <slot name="file-visual" />
             </div>
         </div>
         <div
             :class="{
-                'flex h-[15%] min-h-max justify-end gap-0.5 px-2 pb-1 select-none sm:min-h-12 sm:flex-col sm:pb-2': true,
+                'flex h-full w-full items-center gap-0.5 px-2 pb-1 select-none': true,
             }"
         >
-            <span :class="{ 'truncate font-semibold text-nowrap': true }">{{ file.GetFilename() }}</span>
+            <span :class="{ 'h-max truncate text-lg font-semibold text-nowrap': true }">{{ file.GetFilename() }}</span>
             <span
                 :class="{
-                    'hidden text-xs sm:inline-block': true,
+                    'mt-auto ml-auto text-xs': true,
                     'text-text-secondary': !fileState.Has(SelectedState.Moved),
                 }"
             >
                 {{ file.FormatSize() + ' - ' + file.FormatModified() }}
             </span>
             <span
-                :class="{ 'ml-auto inline-block text-center leading-none sm:hidden': true }"
+                :class="{ 'absolute top-4 right-4 inline-block text-center leading-none sm:hidden': true }"
                 @click="(e) => $emit('contextMenu', e)"
             >
                 ...

@@ -4,24 +4,18 @@
         :class="{ 'page-root': true }"
     >
         <FileScroller
-            v-if="inShareRoot && children"
-            :files="children"
+            v-if="locationStore.inShareRoot"
+            :files="filesStore.children ?? []"
         />
-        <NuxtPage v-if="!inShareRoot" />
+        <NuxtPage v-if="!locationStore.inShareRoot" />
     </div>
 </template>
 
 <script setup lang="ts">
 import FileScroller from '~/components/organism/FileScroller.vue'
 import useFilesStore from '~/stores/files'
+import useLocationStore from '~/stores/location'
 
+const locationStore = useLocationStore()
 const filesStore = useFilesStore()
-
-const inShareRoot = computed(() => {
-    return !filesStore.activeShareId?.length
-})
-
-const children = computed(() => {
-    return filesStore.children
-})
 </script>

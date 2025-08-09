@@ -86,7 +86,6 @@ const {
     quality = PhotoQuality.LowRes,
     shouldLoad = true,
     contain = false,
-    placeholder = false,
 } = defineProps<{
     media?: WeblensMedia
     quality?: PhotoQuality
@@ -111,6 +110,12 @@ const imageSize = computed(() => {
         }
     }
 
+    console.log(
+        media.height,
+        media.width,
+        media.height / media.width > imageContainerSize.height.value / imageContainerSize.width.value,
+        (imageContainerSize.width.value / media.width) * media.height,
+    )
     if (media.height / media.width > imageContainerSize.height.value / imageContainerSize.width.value) {
         const scaledWidth = (imageContainerSize.height.value / media.height) * media.width
         return {
@@ -126,54 +131,13 @@ const imageSize = computed(() => {
     }
 })
 
-const emit = defineEmits<{ (e: 'error'): void }>()
-
-const imgFetchKey = computed(() => {
-    return 'mediaImage-' + media?.contentId + quality + shouldLoad
-})
-
-// const { data: imgUrl } = useAsyncData(
-//     imgFetchKey,
-//     async () => {
-//         // controller?.abort?.()
-//         if (!shouldLoad || !media) {
-//             return ''
-//         }
-//
-//         if (media.IsVideo() && quality === PhotoQuality.HighRes) {
-//             return ''
-//         }
-//
-//         try {
-//             return await media.LoadBytes(quality, 0)
-//         } catch (err) {
-//             console.warn('Error loading image for media', media.contentId, err)
-//             imgError.value = true
-//             emit('error')
-//             return ''
-//         }
-//     },
-//     { lazy: true },
-// )
-
-const bouncedUrl = ref<string>('')
-
-// watch(imgUrl, (newUrl) => {
-//     if (newUrl) {
-//         bouncedUrl.value = newUrl
-//         imgError.value = false
-//     }
-// })
+defineEmits<{ (e: 'error'): void }>()
 
 watch(
     () => media,
-    (newMedia, oldMedia) => {
+    () => {
         imgError.value = false
         highResLoaded.value = false
-        //
-        // if (oldMedia && oldMedia.contentId !== newMedia?.contentId) {
-        //     oldMedia.CancelLoad()
-        // }
     },
 )
 </script>

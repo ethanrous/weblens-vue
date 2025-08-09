@@ -11,7 +11,7 @@
         />
 
         <div
-            v-else-if="rows.length === 0 && !loading && !canLoadMore"
+            v-else-if="rows.rows.length === 0 && !loading && !canLoadMore"
             :class="{ 'm-auto flex flex-col items-center': true }"
         >
             <h3 :class="{ 'border-b': true }">No media found</h3>
@@ -19,13 +19,12 @@
             <span>Or</span>
             <WeblensButton
                 label="Return to Files"
-                @click="useFilesStore().setTimeline(false)"
+                @click="useLocationStore().setTimeline(false)"
             />
         </div>
 
         <div
-            v-for="(row, rowIndex) of rows"
-            v-else
+            v-for="(row, rowIndex) of rows.rows"
             :key="String(rowIndex) + row.items.length"
             :class="{
                 'mx-2 flex flex-row': true,
@@ -71,11 +70,16 @@
             v-if="canLoadMore"
             :class="{ 'mx-auto my-10': true }"
         />
+        <div
+            ref="bottomSpacer"
+            :class="{ 'w-full shrink-0': true }"
+            :style="{ height: `${rows.remainingGap}px` }"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
-import { onKeyPressed, useDebounce, useElementSize, useInfiniteScroll } from '@vueuse/core'
+import { onKeyPressed, useDebounce, useElementSize, useElementVisibility } from '@vueuse/core'
 import { UseElementVisibility } from '@vueuse/components'
 
 import type WeblensMedia from '~/types/weblensMedia'
@@ -85,11 +89,12 @@ import { GetMediaRows } from '~/types/weblensMedia'
 import ErrorCard from '../molecule/ErrorCard.vue'
 import Loader from '../atom/Loader.vue'
 import WeblensButton from '../atom/WeblensButton.vue'
-import useFilesStore from '~/stores/files'
+import useLocationStore from '~/stores/location'
 
 const mediaStore = useMediaStore()
 
 const timelineContainer = ref<HTMLDivElement>()
+const bottomSpacer = ref<HTMLDivElement>()
 const timelineSize = useElementSize(timelineContainer)
 const presentationStore = usePresentationStore()
 const presentationIndex = ref<number>(-1)
@@ -99,16 +104,23 @@ const timelineWidthBounced = useDebounce(timelineSize.width, 100)
 const medias = shallowRef<WeblensMedia[]>([])
 const page = ref<number>(0)
 const canLoadMore = ref<boolean>(true)
+const totalMediaCount = ref<number>(0)
 const error = ref<WLError>()
 
 const MARGIN_SIZE = 4
 
 const rows = computed(() => {
     if (timelineWidthBounced.value <= 0) {
-        return []
+        return { rows: [], remainingGap: 0 }
     }
 
-    return GetMediaRows(medias.value, mediaStore.timelineImageSize, timelineWidthBounced.value - 16, MARGIN_SIZE)
+    return GetMediaRows(
+        medias.value,
+        mediaStore.timelineImageSize,
+        timelineWidthBounced.value - 8,
+        MARGIN_SIZE,
+        canLoadMore.value ? totalMediaCount.value : medias.value.length,
+    )
 })
 
 async function fetchMore() {
@@ -116,55 +128,60 @@ async function fetchMore() {
         return
     }
 
-    const { medias: newMedias, canLoadMore: _canLoadMore } = await mediaStore
-        .fetchMoreMedia(page.value)
-        .catch((fetchError) => {
-            error.value = { status: fetchError.status } as WLError
-            console.error('Error fetching more media:', fetchError)
+    const {
+        medias: newMedias,
+        totalMedias,
+        canLoadMore: _canLoadMore,
+    } = await mediaStore.fetchMoreMedia(page.value).catch((fetchError) => {
+        error.value = { status: fetchError.status } as WLError
+        console.error('Error fetching more media:', fetchError)
 
-            return { medias: [], canLoadMore: false }
-        })
+        return { medias: [], totalMedias: 0, canLoadMore: false }
+    })
+
     canLoadMore.value = _canLoadMore
+    totalMediaCount.value = totalMedias
 
     medias.value = [...medias.value, ...newMedias]
 }
 
-const loading = ref(false)
+const loading = ref<boolean>(false)
 
-const { reset } = useInfiniteScroll(
-    timelineContainer,
-    async () => {
-        if (loading.value) {
-            return
-        }
+const visible = useElementVisibility(bottomSpacer, {
+    scrollTarget: timelineContainer,
+    rootMargin: '0px 0px 1000px 0px',
+})
 
+watchEffect(async () => {
+    if (visible.value && !loading.value && canLoadMore.value) {
         loading.value = true
 
         await fetchMore()
 
         page.value++
         loading.value = false
-    },
-    { distance: 1000, interval: 1000, canLoadMore: () => canLoadMore.value },
-)
+
+        if (mediaStore.imageSearch) {
+            canLoadMore.value = false
+        }
+    }
+})
 
 function startPresenting(rowIndex: number, colIndex: number) {
-    const absIndex = rows.value.slice(0, rowIndex).reduce((acc, row) => acc + row.items.length, 0) + colIndex
+    const absIndex = rows.value.rows.slice(0, rowIndex).reduce((acc, row) => acc + row.items.length, 0) + colIndex
     presentationIndex.value = absIndex
-    presentationStore.setPresentationMediaId(medias.value[absIndex].contentId)
+    presentationStore.setPresentationMediaId(medias.value[absIndex]?.contentId ?? '')
 }
 
 onKeyPressed(['=', '-'], (e) => {
     mediaStore.updateImageSize(e.key === '=' ? 'increase' : 'decrease')
 })
 
-watch([() => mediaStore.timelineSortDirection, () => mediaStore.showRaw], () => {
+watch([() => mediaStore.timelineSortDirection, () => mediaStore.showRaw, () => mediaStore.imageSearch], () => {
     loading.value = true
     medias.value = []
     page.value = 0
     canLoadMore.value = true
-
-    reset()
 
     loading.value = false
 })
@@ -182,7 +199,7 @@ onMounted(() => {
             return
         }
 
-        const newContentId = medias.value[presentationIndex.value].contentId
+        const newContentId = medias.value[presentationIndex.value]?.contentId ?? ''
         presentationStore.setPresentationMediaId(newContentId)
 
         if (medias.value.length - presentationIndex.value < 10 && !loading.value) {

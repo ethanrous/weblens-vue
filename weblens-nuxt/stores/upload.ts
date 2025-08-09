@@ -138,6 +138,7 @@ export const useUploadStore = defineStore('upload', () => {
 
         const file = upload.files[fileId]
         if (file?.chunks && file.chunks[chunkKey]) {
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete file.chunks[chunkKey]
             upload.files[fileId] = file
             uploads.value.set(uploadId, upload)

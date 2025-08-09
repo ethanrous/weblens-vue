@@ -2,31 +2,32 @@
     <div
         ref="contextMenu"
         :class="{
-            'file-context-menu animate-fade-in': true,
+            'file-context-menu animate-fade-in shadow-lg': true,
             'gone hidden': !menuStore.isOpen,
         }"
         :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }"
     >
         <ContextMenuHeader
             :file="targetFile"
-            :naming-file="nameFile"
+            :selected-files="selectedFiles"
+            :naming-file="menuStore.menuMode"
         />
         <ContextMenuActions
-            v-if="!nameFile"
+            v-if="!menuStore.menuMode"
             :target-file="targetFile"
             :selected-files="selectedFiles"
-            @create-folder="nameFile = 'newName'"
-            @rename-file="nameFile = 'rename'"
+            @create-folder="menuStore.setMenuMode('newName')"
+            @rename-file="menuStore.setMenuMode('rename')"
             @share-file="menuStore.setSharing(true)"
         />
         <ContextNameFile
             v-else
-            :value="nameFile === 'rename' ? targetFile?.GetFilename() : ''"
+            :value="menuStore.menuMode === 'rename' ? targetFile?.GetFilename() : ''"
             @submit="handleNameFile"
         />
     </div>
     <ShareModal
-        v-if="targetFile"
+        v-if="targetFile && menuStore.isSharing"
         :file="targetFile"
     />
 </template>
@@ -42,8 +43,7 @@ import ShareModal from './ShareModal.vue'
 import { useWeblensApi } from '~/api/AllApi'
 
 const menuStore = useContextMenuStore()
-
-const nameFile = ref<'rename' | 'newName' | undefined>()
+const locationStore = useLocationStore()
 
 const menuRef = useTemplateRef('contextMenu')
 const menuSize = useElementSize(menuRef)
@@ -100,22 +100,24 @@ async function handleNameFile(newName: string) {
         return
     }
 
-    if (nameFile.value === 'rename') {
+    if (menuStore.menuMode === 'rename') {
         const updateFileRequest = { newName }
-        await useWeblensApi().FilesApi.updateFile(targetFile.value.id, updateFileRequest, useLocationStore().shareId)
-    } else if (nameFile.value === 'newName') {
+        await useWeblensApi().FilesApi.updateFile(targetFile.value.id, updateFileRequest, locationStore.activeShareId)
+    } else if (menuStore.menuMode === 'newName') {
         const newFolderRequest = { newFolderName: newName, parentFolderId: targetFile.value.Id() }
         await useWeblensApi().FoldersApi.createFolder(newFolderRequest)
     }
 
-    nameFile.value = undefined
+    menuStore.setMenuMode()
     menuStore.setMenuOpen(false)
 }
 </script>
 
 <style>
+@reference '../../assets/css/base.css';
+
 .file-context-menu {
-    background-color: var(--color-card-background-primary);
+    background-color: var(--color-background-primary);
     position: absolute;
     height: max-content;
     width: max-content;
@@ -126,7 +128,8 @@ async function handleNameFile(newName: string) {
     transition-property: height, top, left, opacity;
 
     border: 1px solid var(--color-border-primary);
-    box-shadow: var(--wl-soft-shadow);
     z-index: 10;
+
+    @apply shadow-sm;
 }
 </style>
