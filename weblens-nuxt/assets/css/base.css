@@ -249,7 +249,7 @@
         transition-property: background-color, box-shadow, transform, outline, width;
         transition-timing-function: var(--ease-wl-default);
         transition-duration: var(--wl-transition-duration);
-        width: calc-size(max-content);
+        width: max-content;
     }
 
     button:where([data-fill-width='true']) {
@@ -258,6 +258,7 @@
 
     button:where([data-flavor='danger']) {
         --color-button-primary: var(--color-button-danger);
+        --color-button-disabled: rgb(from var(--color-button-danger) r g b / 50%);
     }
 
     button:where([data-flavor='secondary']) {

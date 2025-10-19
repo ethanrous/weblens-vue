@@ -1,13 +1,7 @@
 <template>
     <div
         :class="{
-            'border-card-background-primary relative flex h-full w-full cursor-pointer rounded border transition': true,
-            'border-card-background-selected bg-card-background-selected': fileState.Has(SelectedState.Selected),
-            'hover:bg-card-background-selected/50 hover:border-theme-primary hover:border': fileState.Has(
-                SelectedState.Hovering,
-            ),
-            'bg-card-background-primary hover:bg-card-background-hover': !fileState.Has(SelectedState.Selected),
-            'bg-card-background-disabled !text-text-tertiary pointer-events-none': fileState.Has(SelectedState.Moved),
+            'relative flex h-full w-full cursor-pointer rounded border transition': true,
         }"
     >
         <div :class="{ 'p-1.5': true }">

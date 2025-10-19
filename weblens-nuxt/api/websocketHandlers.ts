@@ -22,7 +22,11 @@ export function handleWebsocketMessage(msg: WsMessage) {
         return
     }
 
-    console.debug('WebSocket message received at', new Date(msg.sentTime).toISOString(), ':', msg, 'at')
+    if (msg.eventTag.toLowerCase().includes('fail')) {
+        console.error('WebSocket message received at', new Date(msg.sentTime).toISOString(), ':', msg, 'at')
+    } else {
+        console.debug('WebSocket message received at', new Date(msg.sentTime).toISOString(), ':', msg, 'at')
+    }
 
     switch (msg.eventTag) {
         case WsEvent.FileCreatedEvent:
@@ -71,7 +75,20 @@ export function handleWebsocketMessage(msg: WsMessage) {
             break
         }
 
+        case WsEvent.TaskCanceledEvent: {
+            useTasksStore().cancelTask(msg.subscribeKey)
+
+            break
+        }
+
+        case WsEvent.TaskFailedEvent: {
+            useTasksStore().failTask(msg.subscribeKey, { tasksFailed: msg.content.failedCount })
+
+            break
+        }
+
         case WsEvent.FileScanStartedEvent:
+        case WsEvent.FileScanFailedEvent:
         case WsEvent.FileScanCompleteEvent: {
             const targetFile = new WeblensFile({ portablePath: msg.content.filename, isDir: true })
 
@@ -82,6 +99,8 @@ export function handleWebsocketMessage(msg: WsMessage) {
                 percentComplete: msg.content.percentProgress,
                 countComplete: msg.content.tasksComplete,
                 countTotal: msg.content.tasksTotal,
+                tasksFailed: msg.content.tasksFailed,
+
                 target: targetFile,
             })
             break
@@ -125,5 +144,8 @@ export function handleWebsocketMessage(msg: WsMessage) {
 
             break
         }
+
+        default:
+            console.warn('Unhandled WebSocket event:', msg.eventTag)
     }
 }

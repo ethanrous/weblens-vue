@@ -32,6 +32,7 @@
                 :type="'light'"
                 :selected="filesStore.activeFile?.IsHome()"
                 allow-collapse
+                fill-width
                 @click.stop="WeblensFile.Home().GoTo()"
             >
                 <IconHome size="18" />
@@ -42,6 +43,7 @@
                 :type="'light'"
                 :selected="locationStore.inShareRoot"
                 allow-collapse
+                fill-width
                 @click.stop="WeblensFile.ShareRoot().GoTo()"
             >
                 <IconUsers size="18" />
@@ -52,6 +54,7 @@
                 :type="'light'"
                 :selected="filesStore.activeFile?.IsTrash()"
                 allow-collapse
+                fill-width
                 @click.stop="WeblensFile.Trash().GoTo()"
             >
                 <IconTrash size="18" />
@@ -65,6 +68,7 @@
             <WeblensButton
                 label="New Folder"
                 allow-collapse
+                fill-width
                 :disabled="contextMenuStore.menuMode === 'newName'"
                 @click.stop="handleNewFolder"
             >
@@ -74,6 +78,7 @@
             <UploadButton
                 label="Upload"
                 allow-collapse
+                fill-width
                 @files-selected="handleUpload"
             >
                 <IconUpload size="18" />

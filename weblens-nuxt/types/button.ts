@@ -1,14 +1,18 @@
 export type ButtonProps = {
     label?: string
+    errorText?: string | ((e: Error) => string)
+
     type?: 'default' | 'outline' | 'light'
     flavor?: 'primary' | 'danger' | 'secondary'
-    selected?: boolean
     danger?: boolean
+    disabled?: boolean
+    selected?: boolean
+
     squareSize?: number
     fillWidth?: boolean
     centerContent?: boolean
     allowCollapse?: boolean
-    disabled?: boolean
     merge?: 'row' | 'column'
+
     onClick?: ((e: MouseEvent) => Promise<void>) | ((e: MouseEvent) => void)
 }

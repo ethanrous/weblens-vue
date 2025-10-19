@@ -2,7 +2,9 @@
     <div
         ref="inputContainer"
         :class="{
-            'hover:bg-background-hover relative flex h-12 cursor-pointer items-center gap-2 rounded-lg border p-2 transition-[width]': true,
+            'hover:bg-background-hover relative flex h-12 cursor-text items-center gap-2 rounded-lg border p-2 transition-[width]': true,
+            'rounded-none first:rounded-l last:rounded-r': merge === 'row',
+            'rounded-none first:rounded-t last:rounded-b': merge === 'column',
         }"
         @click="() => input?.focus()"
     >
@@ -12,9 +14,6 @@
             v-model="value"
             :placeholder="placeholder"
             :type="type"
-            :class="{
-                'cursor-pointer': buttonish,
-            }"
             :autofocus="autoFocus"
             @input="
                 (e) => {
@@ -55,9 +54,9 @@
             <IconArrowRight />
         </div>
         <div
-            v-if="value && !focused.focused.value"
+            v-if="clearButton && value && focused.focused.value"
             :class="{
-                'text-text-tertiary hover:text-text-primary hover:bg-card-background-secondary rounded p-1 transition': true,
+                'text-text-tertiary hover:text-text-primary hover:bg-card-background-secondary cursor-pointer rounded p-1 transition z-90': true,
             }"
             @click.stop="handleClear"
         >
@@ -83,6 +82,8 @@ const props = defineProps<{
     showSubmit?: boolean
     autoFocus?: boolean
     search?: boolean
+    merge?: 'row' | 'column'
+    clearButton?: boolean
 }>()
 
 const value = defineModel<string>('value')
@@ -122,6 +123,7 @@ defineExpose({
 })
 
 onKeyDown(['Enter'], (e) => {
+    if (!focused.focused.value) return
     e.preventDefault()
     emit('submit', value.value ?? '')
     input.value?.blur()

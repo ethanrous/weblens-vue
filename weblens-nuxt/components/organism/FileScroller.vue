@@ -45,17 +45,13 @@
                     'file-scroller': true,
                     '!grid-cols-1': filesStore.fileShape !== 'square',
                 }"
-                :style="{
-                    maxWidth:
-                        filesStore.fileShape === 'square'
-                            ? `min(100%, calc(var(--spacing) * 80 * ${files.length > 0 ? files.length : 1} - var(--spacing) * 2))`
-                            : '',
-                }"
+                :style="{ maxWidth: maxW }"
             >
                 <FileCard
-                    v-for="file of files"
+                    v-for="(file, index) of files"
                     :key="file.id"
                     :file="file"
+                    :file-index="index"
                     :file-shape="filesStore.fileShape"
                 />
             </div>
@@ -84,12 +80,19 @@ const scrollerContainer = useTemplateRef('scrollerContainer')
 const hovering = ref(false)
 
 defineProps<{ files: WeblensFile[] }>()
-console.log('FileScroller', 'files', files)
 
 const activeElement = useActiveElement()
 const notUsingInput = computed(
     () => activeElement.value?.tagName !== 'INPUT' && activeElement.value?.tagName !== 'TEXTAREA',
 )
+
+const maxW = computed(() => {
+    if (filesStore.fileShape === 'square') {
+        return `min(100%, calc(var(--spacing) * 80 * ${filesStore.files.length > 0 ? filesStore.files.length : 1} - var(--spacing) * 2))`
+    }
+
+    return ''
+})
 
 onKeyDown(
     ['Escape'],
@@ -109,7 +112,7 @@ onKeyDown(
     { dedupe: true },
 )
 
-const { Ctrl_A, Cmd_A, space } = useMagicKeys({
+const { Ctrl_A, Cmd_A, space, shift } = useMagicKeys({
     passive: false,
     onEventFired: (e) => {
         if ((((e.ctrlKey || e.metaKey) && e.key === 'a') || /* Spacebar */ e.key === ' ') && notUsingInput.value) {
@@ -134,6 +137,8 @@ watch(
         }
     },
 )
+
+watch(shift!, filesStore.setShiftPressed)
 
 onKeyDown(
     ['Escape'],

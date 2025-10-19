@@ -40,7 +40,7 @@ import useFilesStore from '~/stores/files'
 import WeblensFile from '~/types/weblensFile'
 import WeblensButton from '../atom/WeblensButton.vue'
 import TimelineControls from '../molecule/TimelineControls.vue'
-import { onKeyPressed } from '@vueuse/core'
+import { useMagicKeys, whenever } from '@vueuse/core'
 import Searchbar from '../molecule/Searchbar.vue'
 import FileSortControls from '../molecule/FileSortControls.vue'
 import useLocationStore from '~/stores/location'
@@ -52,23 +52,20 @@ const userStore = useUserStore()
 
 const searchbar = ref<typeof Searchbar>()
 
-onKeyPressed(['shift', 'K'], (e) => {
-    e.preventDefault()
-    if (!searchbar.value) {
-        return
-    }
+const keys = useMagicKeys()
 
-    searchbar.value.focus()
-})
+whenever(
+    () => keys.Cmd_K?.value || keys.Ctrl_K?.value,
+    () => {
+        if (locationStore.isInTimeline) {
+            return
+        }
 
-onKeyPressed(['shift', 'R'], (e) => {
-    e.preventDefault()
-    if (locationStore.isInTimeline) {
-        return
-    }
+        filesStore.setSearchRecurively(keys.shift?.value || false)
 
-    filesStore.setSearchRecurively(!filesStore.searchRecurively)
-})
+        searchbar.value?.focus()
+    },
+)
 
 const activeFile = computed(() => {
     return filesStore.activeFile

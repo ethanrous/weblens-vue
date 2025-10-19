@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', () => {
     const user = shallowRef(new User())
 
     function setUser(info: UserInfo, isLoggedIn: boolean = false) {
+        console.log('Setting user info:', info, 'Logged in:', isLoggedIn)
         user.value = new User(info, isLoggedIn)
     }
 

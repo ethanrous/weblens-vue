@@ -1,27 +1,43 @@
 <template>
     <div :class="{ 'flex h-screen w-screen justify-center': true }">
         <div :class="{ 'flex h-full w-[20%] flex-col gap-2 border p-4': true }">
-            <h2>{{ towerStore.towerInfo?.name }}</h2>
+            <div :class="{ 'mb-2 border-b pb-2': true }">
+                <h3 :class="{ 'leading-5': true }">{{ userStore.user.fullName }}</h3>
+                <h5 :class="{ 'text-text-secondary': true }">{{ userStore.user.username }}</h5>
+            </div>
+
             <WeblensButton
-                label="User"
-                @click="toSettingsPage('user')"
+                label="Account"
+                fill-width
+                @click="toSettingsPage('account')"
             >
                 <IconUser />
             </WeblensButton>
+
             <WeblensButton
                 label="Appearance"
+                fill-width
                 @click="toSettingsPage('appearance')"
             >
                 <IconBrush />
             </WeblensButton>
+
+            <Divider
+                label="Admin"
+                label-justify="left"
+            />
+
             <WeblensButton
                 label="Users"
+                fill-width
                 @click="toSettingsPage('users')"
             >
-                <IconCode />
+                <IconUsers />
             </WeblensButton>
+
             <WeblensButton
                 label="Developer"
+                fill-width
                 @click="toSettingsPage('dev')"
             >
                 <IconCode />
@@ -29,6 +45,7 @@
 
             <WeblensButton
                 label="Log Out"
+                fill-width
                 :class="{ 'mt-auto': true }"
                 flavor="danger"
                 @click="userStore.logout"
@@ -36,6 +53,7 @@
                 <IconLogout />
             </WeblensButton>
         </div>
+
         <div :class="{ 'h-full w-full p-4': true }">
             <NuxtPage />
         </div>
@@ -43,10 +61,10 @@
 </template>
 
 <script setup lang="ts">
-import { IconBrush, IconCode, IconLogout, IconUser } from '@tabler/icons-vue'
+import { IconBrush, IconCode, IconLogout, IconUser, IconUsers } from '@tabler/icons-vue'
 import WeblensButton from '~/components/atom/WeblensButton.vue'
+import Divider from '~/components/atom/Divider.vue'
 
-const towerStore = useTowerStore()
 const userStore = useUserStore()
 
 function toSettingsPage(pageName: string) {

@@ -20,24 +20,13 @@
                     '!bg-background-primary': filterOpen,
                 }"
                 :placeholder="searchText"
-                :key-name="containerSize.width.value > 200 ? 'shift k' : ''"
+                :key-name="keyHintText"
                 :buttonish="!filterOpen"
                 search
+                clear-button
                 @focused="handleSearchFocused"
-                @submit="
-                    async (v) => {
-                        filterOpen = false
-
-                        if (locationStore.isInTimeline) {
-                            mediaStore.setImageSearch(v)
-                        } else {
-                            filesStore.setFileSearch(v)
-                            filesStore.setLoading(true)
-                            await filesStore.doSearch()
-                            filesStore.setLoading(false)
-                        }
-                    }
-                "
+                @submit="handleSubmit"
+                @clear="handleSubmit('')"
                 @update="
                     (v) => {
                         if (!locationStore.isInTimeline) {
@@ -147,6 +136,18 @@ const searchText = computed(() => {
     }
 })
 
+const keyHintText = computed(() => {
+    if (containerSize.width.value < 200) {
+        return ''
+    }
+
+    if (locationStore.operatingSystem === 'macos') {
+        return '⌘K'
+    }
+
+    return 'Ctrl+K'
+})
+
 function closeFilters(doFocus: boolean) {
     filterOpen.value = false
 
@@ -158,6 +159,19 @@ function closeFilters(doFocus: boolean) {
 function handleSearchFocused() {
     if (windowSize.width.value < 1024) {
         filterOpen.value = true
+    }
+}
+
+async function handleSubmit(v: string) {
+    filterOpen.value = false
+
+    if (locationStore.isInTimeline) {
+        mediaStore.setImageSearch(v)
+    } else {
+        filesStore.setFileSearch(v)
+        filesStore.setLoading(true)
+        await filesStore.doSearch()
+        filesStore.setLoading(false)
     }
 }
 

@@ -14,10 +14,13 @@
             <Loader :class="{ 'h-8 w-8': true }" />
         </div>
 
-        <FileScroller
+        <div
             v-else-if="filesStore.files && !locationStore.isInTimeline"
-            :files="filesStore.files"
-        />
+            :class="{ 'flex h-full w-full': true }"
+        >
+            <FileScroller :files="filesStore.files" />
+            <FileHistory />
+        </div>
 
         <MediaTimeline v-else-if="locationStore.isInTimeline" />
     </div>
@@ -26,6 +29,7 @@
 <script setup lang="ts">
 import Loader from '~/components/atom/Loader.vue'
 import FileDragCounter from '~/components/organism/FileDragCounter.vue'
+import FileHistory from '~/components/organism/FileHistory.vue'
 import FileScroller from '~/components/organism/FileScroller.vue'
 import MediaTimeline from '~/components/organism/MediaTimeline.vue'
 import useFilesStore from '~/stores/files'

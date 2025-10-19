@@ -54,6 +54,29 @@ export const useTasksStore = defineStore('tasks', () => {
         tasks.value = new Map(tasks.value)
     }
 
+    function cancelTask(taskId: string) {
+        if (!tasks.value || !tasks.value.has(taskId)) return
+
+        const task = tasks.value.get(taskId)!
+        task.setCanceled()
+
+        // Trigger reactivity
+        tasks.value = new Map(tasks.value)
+    }
+
+    function failTask(taskId: string, opts?: { tasksFailed?: number }) {
+        if (!tasks.value || !tasks.value.has(taskId)) {
+            console.warn('Tried to fail a task that does not exist:', taskId)
+            return
+        }
+
+        const task = tasks.value.get(taskId)!
+        task.setFailed(opts)
+
+        // Trigger reactivity
+        tasks.value = new Map(tasks.value)
+    }
+
     function removeTask(taskId: string) {
         if (!tasks.value) return
 
@@ -68,6 +91,8 @@ export const useTasksStore = defineStore('tasks', () => {
         upsertTask,
         setTaskComplete,
         removeTask,
+        cancelTask,
+        failTask,
 
         taskPromises,
         setTaskPromise,

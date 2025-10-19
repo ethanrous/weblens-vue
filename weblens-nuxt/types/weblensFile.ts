@@ -31,8 +31,12 @@ export class SelectedState {
         return this.selected === selected.selected
     }
 
-    public Has(selected: SelectedState): boolean {
-        return (this.selected & selected.selected) !== 0
+    public Has(...selected: SelectedState[]): boolean {
+        return selected.every((s) => (this.selected & s.selected) !== 0)
+    }
+
+    public Any(...selected: SelectedState[]): boolean {
+        return selected.find((s) => (this.selected & s.selected) !== 0) !== undefined
     }
 
     public Add(selected: SelectedState): SelectedState {

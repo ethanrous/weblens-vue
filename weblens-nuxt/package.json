@@ -11,7 +11,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@ethanrous/weblens-api": "0.0.3",
+    "@ethanrous/weblens-api": "0.0.5",
     "@nuxt/eslint": "1.4.1",
     "@nuxt/image": "1.10.0",
     "@nuxt/kit": "^4.0.1",
@@ -43,6 +43,7 @@
     "eslint-plugin-vue": "~10.2.0",
     "jiti": "^2.4.2",
     "jsdom": "^26.1.0",
+    "less": "^4.4.0",
     "prettier": "3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.13",
     "typescript": "~5.8.0",
@@ -50,5 +51,5 @@
     "vite-plugin-vue-devtools": "^7.7.7",
     "vue-tsc": "^2.2.10"
   },
-  "packageManager": "pnpm@10.12.4+sha512.5ea8b0deed94ed68691c9bad4c955492705c5eeb8a87ef86bc62c74a26b037b08ff9570f108b2e4dbd1dd1a9186fea925e527f141c648e85af45631074680184"
+  "packageManager": "pnpm@10.18.3"
 }

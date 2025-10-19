@@ -27,7 +27,7 @@ const folderSettingsDefault: FolderSettings = {
     fileShape: 'square',
 }
 
-function getSortFunc(sortCondition: SortCondition, sortDirection: 1 | -1): sorterFunc {
+function getSortFunc(sortCondition: SortCondition, sortDirection: SortDirection): sorterFunc {
     console.debug('Sorting files by', sortCondition, 'in direction', sortDirection)
 
     switch (sortCondition) {
@@ -64,6 +64,7 @@ const useFilesStore = defineStore('files', () => {
 
     const lastSelected = ref<string | null>(null)
     const nextSelectedIndex = ref<number | null>(null) // This is used to track the next file to be selected when using shift-click
+    const shiftPressed = ref<boolean>(false) // This is used to track the next file to be selected when using shift-click
 
     const sortDirection = ref<SortDirection>(1)
     const sortCondition = ref<SortCondition>('filename')
@@ -110,6 +111,7 @@ const useFilesStore = defineStore('files', () => {
                 res = await useWeblensApi().FoldersApi.getFolder(
                     locationStore.activeFolderId,
                     locationStore.activeShareId,
+                    locationStore.viewTimestamp,
                 )
             }
 
@@ -151,13 +153,24 @@ const useFilesStore = defineStore('files', () => {
             const activeFile = new WeblensFile(res.data.self)
             return { activeFile: activeFile, children: newChildren, parents }
         },
-        { watch: [user, () => locationStore.activeFolderId], lazy: true },
+        { watch: [user, () => locationStore.activeFolderId, () => locationStore.viewTimestamp], lazy: true },
     )
 
     // Funcs //
-    function setSelected(fileId: string, selected: boolean) {
-        console.log('Setting selected file', fileId, 'to', selected)
+    function setSelected(fileId: string, selected: boolean, doShiftSelect = false) {
         if (selected) {
+            if (doShiftSelect && lastSelectedIndex.value !== -1 && nextSelectedIndex.value !== null) {
+                const startIndex = Math.min(lastSelectedIndex.value, nextSelectedIndex.value)
+                const endIndex = Math.max(lastSelectedIndex.value, nextSelectedIndex.value)
+
+                for (let i = startIndex; i <= endIndex; i++) {
+                    const file = files.value[i]
+                    if (file) {
+                        selectedFiles.value.add(file.Id())
+                    }
+                }
+            }
+
             selectedFiles.value.add(fileId)
             lastSelected.value = fileId
         } else {
@@ -169,6 +182,18 @@ const useFilesStore = defineStore('files', () => {
 
     function setNextSelectedIndex(index: number) {
         nextSelectedIndex.value = index
+    }
+
+    function clearNextSelectedIndex() {
+        nextSelectedIndex.value = null
+    }
+
+    function setShiftPressed(pressed?: boolean) {
+        if (pressed === undefined) {
+            return
+        }
+
+        shiftPressed.value = pressed
     }
 
     function selectAll() {
@@ -376,6 +401,14 @@ const useFilesStore = defineStore('files', () => {
         })
     })
 
+    const lastSelectedIndex = computed(() => {
+        if (!lastSelected.value || !children.value) {
+            return -1
+        }
+
+        return files.value.findIndex((f) => f.Id() === lastSelected.value)
+    })
+
     const files = computed(() => {
         if (searchResults.value !== undefined) {
             return searchResults.value
@@ -416,8 +449,13 @@ const useFilesStore = defineStore('files', () => {
         selectedFiles,
 
         lastSelected,
+        lastSelectedIndex,
         nextSelectedIndex,
         setNextSelectedIndex,
+        clearNextSelectedIndex,
+
+        shiftPressed,
+        setShiftPressed,
 
         addFile,
         removeFiles,

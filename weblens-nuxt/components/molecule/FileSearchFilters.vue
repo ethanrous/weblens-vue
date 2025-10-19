@@ -5,7 +5,7 @@
             :checked="filesStore.searchRecurively"
             @changed="filesStore.setSearchRecurively"
         />
-        <span :class="{ 'text-text-tertiary': true }">Tip: Use shift+r to toggle recursive search</span>
+        <span :class="{ 'text-text-tertiary': true }">Tip: Use Shift+{{ keyHintText }} enable recursive search</span>
         <WeblensButton
             :class="{ 'mt-auto ml-auto w-1/3': true }"
             label="Done"
@@ -19,9 +19,20 @@
 import useFilesStore from '~/stores/files'
 import WeblensCheckbox from '../atom/WeblensCheckbox.vue'
 import WeblensButton from '../atom/WeblensButton.vue'
+import useLocationStore from '~/stores/location'
+
+const locationStore = useLocationStore()
 
 const filesStore = useFilesStore()
 defineEmits<{
     (e: 'done'): void
 }>()
+
+const keyHintText = computed(() => {
+    if (locationStore.operatingSystem === 'macos') {
+        return '⌘K'
+    }
+
+    return 'Ctrl+K'
+})
 </script>

@@ -22,10 +22,7 @@ const bounds = ref<LngLatBoundsLike>()
 
 const props = defineProps<{ coords: [number, number] }>()
 const compCords = computed(() => {
-    const coords: [number, number] = [...props.coords]
-    coords.reverse()
-    console.log('COORDS', coords)
-    return coords
+    return [...props.coords].reverse() as [number, number]
 })
 
 const key = 'vKmgtyP5fhJvYl5mB3Zd'

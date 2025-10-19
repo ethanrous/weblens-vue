@@ -7,7 +7,10 @@
             <NuxtPage />
             <PathCrumbs />
         </div>
-        <WebsocketStatus :class="{ 'absolute right-4 bottom-4 hidden sm:block': true }" />
+        <WebsocketStatus
+            :class="{ 'absolute right-4 bottom-4 hidden sm:block': true }"
+            :status="wsStore.status"
+        />
     </div>
 </template>
 
@@ -17,4 +20,6 @@ import FileHeader from '~/components/organism/FileHeader.vue'
 import PathCrumbs from '~/components/organism/PathCrumbs.vue'
 import Presentation from '~/components/organism/Presentation.vue'
 import UploadProgress from '~/components/organism/UploadProgress.vue'
+
+const wsStore = useWebsocketStore()
 </script>

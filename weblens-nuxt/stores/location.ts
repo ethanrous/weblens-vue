@@ -17,6 +17,8 @@ const useLocationStore = defineStore('location', () => {
 
     const user = computed(() => userStore.user)
 
+    const isHistoryOpen = ref<boolean>(false)
+
     const activeFolderId = computed(() => {
         let fileId = route.params.fileId
         if (fileId === 'home') {
@@ -84,11 +86,51 @@ const useLocationStore = defineStore('location', () => {
         return route.query['timeline'] === 'true'
     })
 
-    function setTimeline(timeline: boolean) {
-        navigateTo({
+    const isInTrash = computed(() => {
+        return activeFolderId.value === user.value.trashId
+    })
+
+    const operatingSystem = computed(() => {
+        if (navigator.userAgent.indexOf('Win') != -1) {
+            return 'windows'
+        } else if (navigator.userAgent.indexOf('Mac') != -1) {
+            return 'macos'
+        }
+
+        return ''
+    })
+
+    const viewTimestamp = computed(() => {
+        const viewPast = route.query['viewPast']
+        if (viewPast) {
+            const ts = new Date(viewPast as string).getTime()
+            if (!isNaN(ts)) {
+                return ts
+            }
+        }
+
+        return 0
+    })
+
+    async function setTimeline(timeline: boolean) {
+        await navigateTo({
             query: {
                 ...route.query,
                 timeline: String(timeline),
+            },
+        })
+    }
+
+    function setHistoryOpen(opened: boolean) {
+        isHistoryOpen.value = opened
+    }
+
+    async function setViewTimestamp(ts: number) {
+        console.log('Setting view timestamp to', ts)
+        await navigateTo({
+            query: {
+                ...route.query,
+                viewPast: new Date(ts).toISOString(),
             },
         })
     }
@@ -101,8 +143,17 @@ const useLocationStore = defineStore('location', () => {
 
         activeFolderId,
         isInTimeline,
+        isInTrash,
+
+        operatingSystem,
 
         setTimeline,
+
+        isHistoryOpen,
+        setHistoryOpen,
+
+        viewTimestamp,
+        setViewTimestamp,
     }
 })
 

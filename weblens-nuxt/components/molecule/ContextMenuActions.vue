@@ -41,6 +41,7 @@
         </WeblensButton>
 
         <WeblensButton
+            v-if="!locationStore.isInTrash"
             :key="targetFile?.Id()"
             :label="downloadTaskPercentComplete ? `Zipping (${downloadTaskPercentComplete.toFixed(0)}%)` : 'Download'"
             fill-width
@@ -60,7 +61,15 @@
         </WeblensButton>
 
         <WeblensButton
-            label="Delete"
+            label="Folder History"
+            fill-width
+            @click.stop="locationStore.setHistoryOpen(true)"
+        >
+            <IconHistoryToggle />
+        </WeblensButton>
+
+        <WeblensButton
+            :label="deleteText"
             fill-width
             flavor="danger"
             :disabled="!canDelete"
@@ -72,7 +81,15 @@
 </template>
 
 <script setup lang="ts">
-import { IconDownload, IconFolderPlus, IconPencil, IconPhotoScan, IconTrash, IconUsersPlus } from '@tabler/icons-vue'
+import {
+    IconDownload,
+    IconFolderPlus,
+    IconHistoryToggle,
+    IconPencil,
+    IconPhotoScan,
+    IconTrash,
+    IconUsersPlus,
+} from '@tabler/icons-vue'
 import WeblensButton from '../atom/WeblensButton.vue'
 import type WeblensFile from '~/types/weblensFile'
 import useFilesStore from '~/stores/files'
@@ -85,6 +102,7 @@ const filesStore = useFilesStore()
 const locationStore = useLocationStore()
 const menuStore = useContextMenuStore()
 const tasksStore = useTasksStore()
+const userStore = useUserStore()
 
 const downloadTaskId = ref<string>()
 
@@ -116,17 +134,17 @@ const canModifyParent = computed(() => {
 })
 
 const canDelete = computed(() => {
-    if (!canModifyTarget.value) {
-        return false
-    }
+    if (props.targetFile?.IsTrash()) return true
 
-    if (locationStore.activeShare && !locationStore.activeShare.checkPermission('canDelete')) {
-        return false
-    }
+    if (locationStore.isInTrash) return true
 
-    if (protectedFile.value) {
-        return false
-    }
+    if (!canModifyTarget.value) return false
+
+    if (targetIsFolder.value) return false
+
+    if (locationStore.activeShare && !locationStore.activeShare.checkPermission('canDelete')) return false
+
+    if (protectedFile.value) return false
 
     return true
 })
@@ -143,6 +161,16 @@ const downloadTaskPercentComplete = computed(() => {
     console.log({ ...tasksStore.tasks?.get(downloadTaskId.value) })
 
     return tasksStore.tasks?.get(downloadTaskId.value)?.percentComplete
+})
+
+const deleteText = computed(() => {
+    if (props.targetFile?.IsTrash()) {
+        return 'Empty Trash'
+    } else if (locationStore.isInTrash) {
+        return 'Delete'
+    }
+
+    return 'Trash'
 })
 
 function handleScan() {
@@ -212,8 +240,14 @@ async function handleDeleteFile(): Promise<void> {
     }
 
     filesStore.setMovedFile(props.selectedFiles, true)
+    if (props.targetFile?.IsTrash()) {
+        await useWeblensApi().FilesApi.deleteFiles({ fileIds: [userStore.user.trashId] }, false, true)
+    } else if (locationStore.activeFolderId === userStore.user.trashId) {
+        await useWeblensApi().FilesApi.deleteFiles({ fileIds: props.selectedFiles })
+    } else {
+        await useWeblensApi().FilesApi.moveFiles({ fileIds: props.selectedFiles, newParentId: userStore.user.trashId })
+    }
 
-    await useWeblensApi().FilesApi.deleteFiles({ fileIds: props.selectedFiles })
     menuStore.setMenuOpen(false)
 }
 </script>

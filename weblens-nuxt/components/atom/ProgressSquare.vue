@@ -9,13 +9,13 @@
                 'gradient-progress-box': true,
                 '!bg-danger': failed,
             }"
+            :data-failed="failed"
             :style="{ width }"
         />
         <div
             :class="{
                 'gradient-outline-box': true,
                 'border-0 !bg-transparent before:opacity-0': showOutline === false,
-                '!bg-danger/50': failed,
             }"
         />
     </div>
@@ -81,5 +81,9 @@ const width = computed(() => {
     z-index: 2;
 
     transition: width 150ms var(--ease-wl-default);
+}
+
+.gradient-progress-box[data-failed='true'] {
+    background: linear-gradient(130deg, var(--color-danger), var(--color-danger));
 }
 </style>

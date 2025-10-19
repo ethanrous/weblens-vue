@@ -5,10 +5,10 @@
     >
         <FileDragCounter />
         <FileScroller
-            v-if="filesStore.files && !filesStore.timeline"
+            v-if="filesStore.files && !locationStore.isInTimeline"
             :files="filesStore.files"
         />
-        <MediaTimeline v-else-if="filesStore.timeline" />
+        <MediaTimeline v-else-if="locationStore.isInTimeline" />
     </div>
 </template>
 
@@ -17,6 +17,8 @@ import FileDragCounter from '~/components/organism/FileDragCounter.vue'
 import FileScroller from '~/components/organism/FileScroller.vue'
 import MediaTimeline from '~/components/organism/MediaTimeline.vue'
 import useFilesStore from '~/stores/files'
+import useLocationStore from '~/stores/location'
 
 const filesStore = useFilesStore()
+const locationStore = useLocationStore()
 </script>

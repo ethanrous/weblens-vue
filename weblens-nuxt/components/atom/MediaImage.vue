@@ -30,7 +30,8 @@
             "
         />
         <div
-            v-if="media && !highResLoaded"
+            v-if="media && !highResLoaded && shouldLoad"
+            :class="{ 'animate-fade-in': true }"
             :style="{
                 width: imageSize.width,
                 height: imageSize.height,
@@ -47,20 +48,6 @@
                 }
             "
         />
-        <!-- <img -->
-        <!--     v-else-if="bouncedUrl" -->
-        <!--     :src="bouncedUrl" -->
-        <!--     draggable="false" -->
-        <!--     :class="{ -->
-        <!--         'z-2': true, -->
-        <!--         'h-full w-full object-cover': !contain, -->
-        <!--         'max-h-full object-contain': contain, -->
-        <!--     }" -->
-        <!-- /> -->
-        <!-- <div -->
-        <!--     v-if="placeholder" -->
-        <!--     :class="{ 'bg-card-background-secondary absolute z-1 h-full w-[99%] rounded': true }" -->
-        <!-- /> -->
 
         <Loader
             v-if="quality === PhotoQuality.HighRes && !highResLoaded && shouldLoad"
@@ -74,35 +61,34 @@ import { IconExclamationCircle } from '@tabler/icons-vue'
 import type WeblensMedia from '~/types/weblensMedia'
 import { PhotoQuality } from '~/types/weblensMedia'
 import Loader from './Loader.vue'
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useElementVisibility } from '@vueuse/core'
 
 const imgError = ref<boolean>(false)
 const imageContainer = ref<HTMLDivElement>()
 const imageContainerSize = useElementSize(imageContainer)
 const highResLoaded = ref<boolean>(false)
 
+const shouldLoad = ref<boolean>(false)
+const isVisible = useElementVisibility(imageContainer, { rootMargin: '250px' })
+watchEffect(() => {
+    if (isVisible.value) {
+        shouldLoad.value = true
+    }
+})
+
 const {
     media = undefined,
     quality = PhotoQuality.LowRes,
-    shouldLoad = true,
     contain = false,
 } = defineProps<{
     media?: WeblensMedia
     quality?: PhotoQuality
-    shouldLoad?: boolean
     contain?: boolean
     placeholder?: boolean
     noClick?: boolean
 }>()
 
 const imageSize = computed(() => {
-    if (!media || !imageContainerSize.width || !imageContainerSize.height) {
-        return {
-            width: '',
-            height: '',
-        }
-    }
-
     if (!contain) {
         return {
             width: '100%',
@@ -110,12 +96,13 @@ const imageSize = computed(() => {
         }
     }
 
-    console.log(
-        media.height,
-        media.width,
-        media.height / media.width > imageContainerSize.height.value / imageContainerSize.width.value,
-        (imageContainerSize.width.value / media.width) * media.height,
-    )
+    if (!shouldLoad.value || !media || !imageContainerSize.width || !imageContainerSize.height) {
+        return {
+            width: '',
+            height: '',
+        }
+    }
+
     if (media.height / media.width > imageContainerSize.height.value / imageContainerSize.width.value) {
         const scaledWidth = (imageContainerSize.height.value / media.height) * media.width
         return {

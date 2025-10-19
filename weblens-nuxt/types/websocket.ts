@@ -22,6 +22,8 @@ export enum WsEvent {
     FileMovedEvent = 'fileMoved',
     FileScanCompleteEvent = 'fileScanComplete',
     FileScanStartedEvent = 'fileScanStarted',
+    FileScanFailedEvent = 'fileScanFailedEvent',
+    FileScanCancelledEvent = 'fileScanCancelledEvent',
     FileUpdatedEvent = 'fileUpdated',
     FilesDeletedEvent = 'filesDeleted',
     FilesMovedEvent = 'filesMoved',

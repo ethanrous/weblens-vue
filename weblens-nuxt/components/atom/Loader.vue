@@ -2,6 +2,7 @@
     <div
         v-if="!type || type === 'default'"
         :class="{ 'gradient-block funky-spinner': true }"
+        :style="style"
     />
     <div
         v-else-if="type === '4square'"
@@ -15,9 +16,19 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { toCssUnit } from '~/util/domHelpers'
+
+const props = defineProps<{
     type?: 'default' | '4square'
+    size?: string
 }>()
+
+const style = computed(() => {
+    return {
+        width: props.size ? toCssUnit(props.size) : '1rem',
+        height: props.size ? toCssUnit(props.size) : '1rem',
+    }
+})
 </script>
 
 <style scoped>

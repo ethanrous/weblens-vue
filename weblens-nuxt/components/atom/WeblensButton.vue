@@ -2,13 +2,14 @@
     <button
         ref="buttonRef"
         :class="{
-            'justify-center': centerContent || !label || justIcon,
-            'aspect-square': !label || justIcon,
-            'rounded-none first-of-type:rounded-l last-of-type:rounded-r': merge === 'row',
-            'rounded-none first-of-type:rounded-t last-of-type:rounded-b': merge === 'column',
-            '!p-0': !label,
+            'animate-fade-in': true,
+            'justify-center': centerContent || !textContent || justIcon,
+            'aspect-square': !textContent || justIcon,
+            'rounded-none first:rounded-l last:rounded-r': merge === 'row',
+            'rounded-none first:rounded-t last:rounded-b': merge === 'column',
+            '!p-0': !textContent,
         }"
-        :data-flavor="flavor"
+        :data-flavor="buttonError ? 'danger' : flavor"
         :data-type="type"
         :data-selected="selected ?? false"
         :data-fill-width="fillWidth"
@@ -17,7 +18,7 @@
     >
         <slot />
         <span
-            v-if="label && !justIcon"
+            v-if="textContent && !justIcon"
             :class="{
                 'mx-1 text-nowrap transition-[width]': true,
             }"
@@ -25,16 +26,16 @@
                 width: textWidth,
             }"
         >
-            {{ label }}
+            {{ textContent }}
         </span>
 
         <!-- Fake text box just to measure the width -->
         <span
-            v-if="label"
+            v-if="textContent"
             ref="fakeText"
             :class="{ 'gone absolute mx-1 text-nowrap': true }"
         >
-            {{ label }}
+            {{ textContent }}
         </span>
 
         <slot name="rightIcon" />
@@ -50,12 +51,17 @@ const props = defineProps<ButtonProps>()
 const slots = useSlots()
 
 const doingClick = ref<boolean>(false)
+const buttonError = ref<string>('')
 
 const buttonRef = ref<HTMLButtonElement>()
 const buttonSize = useElementSize(buttonRef)
 
 const fakeText = ref<HTMLSpanElement>()
 const fakeTextSize = useElementSize(fakeText)
+
+defineExpose({
+    click: handleClick,
+})
 
 const textWidth = computed(() => {
     if (fakeText.value) {
@@ -76,15 +82,48 @@ const justIcon = computed(() => {
     return false
 })
 
+const textContent = computed(() => {
+    if (buttonError.value) {
+        return buttonError.value
+    }
+
+    if (props.label) {
+        return props.label
+    }
+
+    return ''
+})
+
 async function handleClick(e: MouseEvent) {
     if (!props.onClick) {
         return
     }
 
     const maybePromise = props.onClick(e)
-    if (maybePromise instanceof Promise) {
-        doingClick.value = true
-        await maybePromise
+    try {
+        if (maybePromise instanceof Promise) {
+            doingClick.value = true
+            await maybePromise
+        }
+    } catch (error) {
+        console.error('Error during button click:', error)
+
+        if (!props.errorText) {
+            buttonError.value = 'Error'
+        } else if (typeof props.errorText === 'string') {
+            buttonError.value = props.errorText
+        } else if (typeof props.errorText === 'function') {
+            buttonError.value = props.errorText(error as Error)
+        }
+
+        await new Promise((resolve) => {
+            setTimeout(() => {
+                buttonError.value = ''
+                resolve(true)
+            }, 3000) // Reset error state after 3 seconds
+        })
+    } finally {
+        // Ensure the button is not disabled after the click
         doingClick.value = false
     }
 }

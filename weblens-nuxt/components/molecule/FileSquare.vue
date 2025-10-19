@@ -1,13 +1,7 @@
 <template>
     <div
         :class="{
-            'border-card-background-primary flex aspect-square h-full w-full cursor-pointer flex-col rounded border transition': true,
-            'border-card-background-selected bg-card-background-selected': fileState.Has(SelectedState.Selected),
-            'hover:bg-card-background-selected/50 hover:border-theme-primary hover:border': fileState.Has(
-                SelectedState.Hovering,
-            ),
-            'bg-card-background-primary hover:bg-card-background-hover': !fileState.Has(SelectedState.Selected),
-            'bg-card-background-disabled !text-text-tertiary pointer-events-none': fileState.Has(SelectedState.Moved),
+            'flex aspect-square h-full w-full cursor-pointer flex-col rounded transition': true,
         }"
     >
         <div
@@ -24,14 +18,14 @@
                 'flex h-[15%] min-h-max justify-end gap-0.5 px-2 pb-1 select-none sm:min-h-12 sm:flex-col sm:pb-2': true,
             }"
         >
-            <span :class="{ 'truncate font-semibold text-nowrap': true }">{{ file.GetFilename() }}</span>
+            <span :class="{ 'truncate font-semibold text-nowrap': true }">{{ filename }}</span>
             <span
                 :class="{
                     'hidden text-xs sm:inline-block': true,
                     'text-text-secondary': !fileState.Has(SelectedState.Moved),
                 }"
             >
-                {{ file.FormatSize() + ' - ' + file.FormatModified() }}
+                {{ fileStats }}
             </span>
             <span
                 :class="{ 'ml-auto inline-block text-center leading-none sm:hidden': true }"
@@ -47,7 +41,7 @@
 import { SelectedState } from '@/types/weblensFile'
 import type WeblensFile from '@/types/weblensFile'
 
-defineProps<{
+const props = defineProps<{
     file: WeblensFile
     fileState: SelectedState
 }>()
@@ -55,4 +49,12 @@ defineProps<{
 defineEmits<{
     (e: 'contextMenu', event: MouseEvent): void
 }>()
+
+const filename = computed(() => {
+    return props.file.GetFilename()
+})
+
+const fileStats = computed(() => {
+    return props.file.FormatSize() + ' - ' + props.file.FormatModified()
+})
 </script>

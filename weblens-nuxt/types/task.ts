@@ -9,6 +9,7 @@ export enum TaskStatus {
     Pending = 'pending',
     InProgress = 'in-progress',
     Completed = 'completed',
+    Canceled = 'canceled',
     Failed = 'failed',
 }
 
@@ -20,6 +21,7 @@ type TaskPayloads = {
         countTotal: number
         target: WeblensFile
         executionTime?: number
+        tasksFailed?: number
     }
     [TaskType.CreateZip]: {
         taskType: TaskType.CreateZip
@@ -65,7 +67,7 @@ export class Task<T extends TaskType = TaskType> {
         return this.taskType === TaskType.CreateZip
     }
 
-    updateProgress(params: TaskParams<T>) {
+    public updateProgress(params: TaskParams<T>) {
         this._params = params
 
         if (this.isScanDirectoryTask()) {
@@ -96,17 +98,33 @@ export class Task<T extends TaskType = TaskType> {
         }
     }
 
-    setComplete() {
+    public setCanceled() {
+        this._status = TaskStatus.Canceled
+    }
+
+    public setFailed(opts?: { tasksFailed?: number }) {
+        this._status = TaskStatus.Failed
+        console.log('Setting task as failed:', this.taskId)
+        if (this.isScanDirectoryTask() && opts?.tasksFailed !== undefined) {
+            this._params.tasksFailed = opts.tasksFailed
+        }
+    }
+
+    public setComplete() {
         this._status = TaskStatus.Completed
         this.percentComplete = 100
     }
 
-    setExeTime(executionTime: number) {
+    public setExeTime(executionTime: number) {
         this._executionTime = executionTime
     }
 
     public get status(): TaskStatus {
         return this._status
+    }
+
+    public get failCount(): number {
+        return (this._params as { tasksFailed: number }).tasksFailed ?? 0
     }
 
     executionTime(this: Task<TaskType.ScanDirectory>): number

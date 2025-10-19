@@ -43,6 +43,8 @@ export function ScanDirectory(directory: WeblensFile) {
 }
 
 export function CancelTask(taskId: string) {
+    console.debug('Cancelling task:', taskId)
+
     useWebsocketStore().send({ action: WsAction.CancelTask, content: { taskId: taskId } })
 }
 

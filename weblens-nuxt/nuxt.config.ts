@@ -58,4 +58,24 @@ export default defineNuxtConfig({
     vite: {
         plugins: [tailwindcss()],
     },
+    app: {
+        head: {
+            title: 'Weblens',
+            meta: [
+                { charset: 'utf-8' },
+                { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+
+                { property: 'og:site_name', content: 'Weblens' },
+                { property: 'al:ios:app_name', content: 'Weblens' },
+                { property: 'og:title', content: '{{.Title}}' },
+                { property: 'og:description', content: '{{.Description}}' },
+                { property: 'og:url', content: '{{.Url}}' },
+                { property: 'og:image', content: '{{.Image}}' },
+                { property: 'og:type', content: '{{.Type}}' },
+                { property: 'og:video:url', content: '{{.VideoUrl}}' },
+                { property: 'og:video:secure_url', content: '{{.SecureUrl}}' },
+                { property: 'og:video:type', content: '{{.VideoType}}' },
+            ],
+        },
+    },
 })
