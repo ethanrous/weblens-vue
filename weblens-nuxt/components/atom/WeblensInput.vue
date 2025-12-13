@@ -56,7 +56,7 @@
         <div
             v-if="clearButton && value && focused.focused.value"
             :class="{
-                'text-text-tertiary hover:text-text-primary hover:bg-card-background-secondary cursor-pointer rounded p-1 transition z-90': true,
+                'text-text-tertiary hover:text-text-primary hover:bg-card-background-secondary z-90 cursor-pointer rounded p-1 transition': true,
             }"
             @click.stop="handleClear"
         >

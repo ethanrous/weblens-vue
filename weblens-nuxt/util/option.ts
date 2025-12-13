@@ -11,8 +11,12 @@ export class Optional<T> {
         return this.hasValue
     }
 
-    get(): T {
+    get(defaultVal?: T): T {
         if (!this.hasValue) {
+            if (defaultVal !== undefined) {
+                return defaultVal
+            }
+
             throw new Error('No value present')
         }
 

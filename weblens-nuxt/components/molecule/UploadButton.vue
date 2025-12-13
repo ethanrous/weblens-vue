@@ -16,6 +16,7 @@
             v-if="containerSize.width.value > 100"
             :class="{ 'ml-0.5 hidden md:flex': true }"
             merge="row"
+            :disabled="disabled"
             @click="clickFileInput(true)"
         >
             <IconFolder />

@@ -1,7 +1,7 @@
 <template>
     <div
         v-if="file"
-        :class="{ 'fileIcon flex items-center': true }"
+        :class="{ 'fileIcon inline-flex items-center': true }"
     >
         <IconHome
             v-if="file.IsHome()"

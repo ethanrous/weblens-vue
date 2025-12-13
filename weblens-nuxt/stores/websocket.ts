@@ -28,8 +28,9 @@ export const useWebsocketStore = defineStore('websocket', () => {
 
     function send(data: object) {
         const dataStr = JSON.stringify(data)
-        console.log('Sending WebSocket message:', dataStr)
         sendRaw(dataStr)
+
+        console.debug('Sent websocket message:', data)
     }
 
     return { status, data, send, open, close }

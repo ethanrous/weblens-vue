@@ -9,10 +9,17 @@
             v-for="(file, index) in crumbFiles"
             :key="index"
             :class="{
-                'text-text-secondary group inline-flex items-center': true,
-                'cursor-pointer': index !== crumbFiles.length - 1,
+                'text-text-secondary inline-flex items-center': true,
+                'group cursor-pointer': index !== crumbFiles.length - 1 && userStore.loggedIn,
             }"
-            @click="file.GoTo()"
+            @click="
+                () => {
+                    if (index === crumbFiles.length - 1 || !userStore.loggedIn) {
+                        return
+                    }
+                    file.GoTo()
+                }
+            "
             @mouseup="
                 () => {
                     if (filesStore.dragging) moveFiles(file)
@@ -50,6 +57,7 @@ import useLocationStore from '~/stores/location'
 
 const filesStore = useFilesStore()
 const locationStore = useLocationStore()
+const userStore = useUserStore()
 
 const crumbFiles = computed(() => {
     let files: WeblensFile[] = []

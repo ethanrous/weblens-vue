@@ -1,6 +1,7 @@
 import type { TaskType } from './task'
 
 export interface WsMessage {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     content: any
     eventTag: WsEvent
     subscribeKey: string

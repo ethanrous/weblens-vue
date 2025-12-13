@@ -35,7 +35,18 @@
         :class="{ 'text-text-tertiary absolute flex h-full w-full items-center justify-center gap-1': true }"
     >
         <IconFileSad />
-        <span :class="{ 'select-none': true }">This folder is empty</span>
+        <span
+            v-if="locationStore.isViewingPast"
+            :class="{ 'select-none': true }"
+        >
+            This folder was empty
+        </span>
+        <span
+            v-else
+            :class="{ 'select-none': true }"
+        >
+            This folder is empty
+        </span>
     </div>
 </template>
 

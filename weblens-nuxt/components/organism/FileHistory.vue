@@ -19,7 +19,7 @@
                     :class="{ 'mr-auto': true }"
                 />
             </div>
-            <div :class="{ 'flex h-full w-full flex-col gap-1 overflow-y-scroll pr-1.5': true }">
+            <div :class="{ 'flex h-full w-full flex-col gap-1 overflow-y-scroll': true }">
                 <div
                     v-for="historyItem in historyData"
                     :key="historyItem.eventId"
@@ -44,7 +44,12 @@ const locationStore = useLocationStore()
 const filesStore = useFilesStore()
 
 const { data: historyData } = useAsyncData(
-    'file-history-' + locationStore.activeFolderId,
+    'file-history-' +
+        locationStore.activeFolderId +
+        '-' +
+        locationStore.isHistoryOpen +
+        '-' +
+        locationStore.viewTimestamp,
     async () => {
         if (!locationStore.isHistoryOpen) {
             return []
@@ -65,10 +70,18 @@ const { data: historyData } = useAsyncData(
             if (path.filename === 'Trash') {
                 return false
             }
+
+            return true
         })
 
         return history
     },
-    { watch: [() => locationStore.viewTimestamp, () => locationStore.activeFolderId] },
+    {
+        watch: [
+            () => locationStore.viewTimestamp,
+            () => locationStore.activeFolderId,
+            () => locationStore.isHistoryOpen,
+        ],
+    },
 )
 </script>

@@ -79,7 +79,7 @@
 
                     <span
                         v-if="task.status === TaskStatus.Completed && task.isScanDirectoryTask()"
-                        :class="{ 'text-text-secondary text-nowrap my-1': true }"
+                        :class="{ 'text-text-secondary my-1 text-nowrap': true }"
                     >
                         Imported in {{ humanDuration(task.executionTime() / (1000 * 1000)) }}
                     </span>

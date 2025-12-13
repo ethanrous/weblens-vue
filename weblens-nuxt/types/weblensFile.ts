@@ -4,7 +4,7 @@ import { useUserStore } from '~/stores/user'
 import { humanBytes } from '~/util/humanBytes'
 import WeblensShare from '~/types/weblensShare'
 import { useWeblensApi } from '~/api/AllApi'
-import type { FileInfo } from '@ethanrous/weblens-api'
+import type { FileActionInfo, FileInfo } from '@ethanrous/weblens-api'
 
 export class SelectedState {
     public static NotSelected = new SelectedState(0b0)
@@ -390,7 +390,6 @@ class WeblensFile implements FileInfo {
     }
 
     public async GetShare(refetch?: boolean): Promise<WeblensShare> {
-        console.log('File has share?', this.shareId, this.share)
         if (this.share.shareId && !this.shareId) {
             this.shareId = this.share.shareId
         }
@@ -477,6 +476,15 @@ class WeblensFile implements FileInfo {
             isDir: true,
             modifiable: false,
             pastFile: false,
+        })
+    }
+
+    public static FromAction(action: FileActionInfo): WeblensFile {
+        return new WeblensFile({
+            id: action.fileId,
+            portablePath: action.filepath,
+            parentId: action.parentId,
+            isDir: action.filepath?.endsWith('/'),
         })
     }
 }

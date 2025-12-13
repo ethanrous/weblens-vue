@@ -104,7 +104,6 @@ export class Task<T extends TaskType = TaskType> {
 
     public setFailed(opts?: { tasksFailed?: number }) {
         this._status = TaskStatus.Failed
-        console.log('Setting task as failed:', this.taskId)
         if (this.isScanDirectoryTask() && opts?.tasksFailed !== undefined) {
             this._params.tasksFailed = opts.tasksFailed
         }
@@ -121,6 +120,10 @@ export class Task<T extends TaskType = TaskType> {
 
     public get status(): TaskStatus {
         return this._status
+    }
+
+    public get isRunning(): boolean {
+        return this._status === TaskStatus.InProgress || this._status === TaskStatus.Pending
     }
 
     public get failCount(): number {

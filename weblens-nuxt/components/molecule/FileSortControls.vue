@@ -1,7 +1,7 @@
 <template>
     <div
         :class="{
-            'hidden h-10 w-20 min-w-0 items-start justify-end gap-[2px] rounded transition-[background-color,width,height] sm:flex lg:w-full': true,
+            'hidden h-10 w-max min-w-0 items-start justify-end gap-[2px] rounded transition-[background-color,width,height] sm:flex lg:w-full': true,
         }"
     >
         <WeblensOptions

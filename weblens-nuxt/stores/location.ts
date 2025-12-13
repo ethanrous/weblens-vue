@@ -74,7 +74,6 @@ const useLocationStore = defineStore('location', () => {
         }
 
         if (isInShare && activeShare.value && !route.params.fileId) {
-            console.log('No fileId in route, redirecting to share root', activeShare)
             return navigateTo({
                 path: `/files/share/${activeShareId.value}/${activeShare.value?.fileId}`,
                 query: route.query,
@@ -101,15 +100,19 @@ const useLocationStore = defineStore('location', () => {
     })
 
     const viewTimestamp = computed(() => {
-        const viewPast = route.query['viewPast']
-        if (viewPast) {
-            const ts = new Date(viewPast as string).getTime()
+        const rewindTo = route.query['rewindTo']
+        if (rewindTo) {
+            const ts = new Date(rewindTo as string).getTime()
             if (!isNaN(ts)) {
                 return ts
             }
         }
 
         return 0
+    })
+
+    const isViewingPast = computed(() => {
+        return viewTimestamp.value > 0
     })
 
     async function setTimeline(timeline: boolean) {
@@ -126,11 +129,12 @@ const useLocationStore = defineStore('location', () => {
     }
 
     async function setViewTimestamp(ts: number) {
-        console.log('Setting view timestamp to', ts)
+        const tsString = ts > 0 ? new Date(ts).toISOString() : undefined
+
         await navigateTo({
             query: {
                 ...route.query,
-                viewPast: new Date(ts).toISOString(),
+                rewindTo: tsString,
             },
         })
     }
@@ -153,6 +157,7 @@ const useLocationStore = defineStore('location', () => {
         setHistoryOpen,
 
         viewTimestamp,
+        isViewingPast,
         setViewTimestamp,
     }
 })

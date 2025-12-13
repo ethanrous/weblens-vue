@@ -5,8 +5,10 @@ import User from '~/types/user'
 export const useUserStore = defineStore('user', () => {
     const user = shallowRef(new User())
 
+    const loggedIn = computed(() => user.value.isLoggedIn.get(false))
+
     function setUser(info: UserInfo, isLoggedIn: boolean = false) {
-        console.log('Setting user info:', info, 'Logged in:', isLoggedIn)
+        console.debug('Setting user info:', info, 'Logged in:', isLoggedIn)
         user.value = new User(info, isLoggedIn)
     }
 
@@ -20,11 +22,14 @@ export const useUserStore = defineStore('user', () => {
             .then((res) => setUser(res.data, true))
             .catch(() => setUser({} as UserInfo, false))
 
-        console.log('Loading user info...', user.value)
+        console.debug('Loading user info...', user.value)
     }
 
     async function logout(): Promise<void> {
-        await useWeblensApi().UsersApi.logoutUser()
+        if (loggedIn.value) {
+            await useWeblensApi().UsersApi.logoutUser()
+        }
+
         await navigateTo('/login')
     }
 
@@ -32,5 +37,11 @@ export const useUserStore = defineStore('user', () => {
         loadUser()
     })
 
-    return { user, setUser, logout }
+    return {
+        user,
+        loggedIn,
+
+        setUser,
+        logout,
+    }
 })

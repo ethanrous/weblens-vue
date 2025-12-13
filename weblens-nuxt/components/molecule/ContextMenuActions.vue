@@ -63,7 +63,12 @@
         <WeblensButton
             label="Folder History"
             fill-width
-            @click.stop="locationStore.setHistoryOpen(true)"
+            @click.stop="
+                () => {
+                    locationStore.setHistoryOpen(true)
+                    menuStore.setMenuOpen(false)
+                }
+            "
         >
             <IconHistoryToggle />
         </WeblensButton>
@@ -126,11 +131,11 @@ const protectedFile = computed(() => {
 })
 
 const canModifyTarget = computed(() => {
-    return props.targetFile?.modifiable
+    return props.targetFile?.modifiable && !locationStore.isViewingPast
 })
 
 const canModifyParent = computed(() => {
-    return filesStore.activeFile?.modifiable
+    return filesStore.activeFile?.modifiable && !locationStore.isViewingPast
 })
 
 const canDelete = computed(() => {
@@ -157,8 +162,6 @@ const downloadTaskPercentComplete = computed(() => {
     if (!downloadTaskId.value) {
         return undefined
     }
-
-    console.log({ ...tasksStore.tasks?.get(downloadTaskId.value) })
 
     return tasksStore.tasks?.get(downloadTaskId.value)?.percentComplete
 })

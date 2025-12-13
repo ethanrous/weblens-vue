@@ -44,10 +44,6 @@ class WeblensMedia implements MediaInfo {
     private loadError?: PhotoQuality
 
     constructor(init: MediaInfo) {
-        if (typeof init.contentId !== 'string') {
-            console.trace(init)
-        }
-
         Object.assign(this, init)
 
         this.selected = false
@@ -231,7 +227,7 @@ class WeblensMedia implements MediaInfo {
         if (quality === PhotoQuality.LowRes || !this.fullres) {
             return this.thumbnail
         } else if (quality === PhotoQuality.HighRes) {
-            return this.fullres[pageNumber ?? 0]
+            return this.fullres[pageNumber ?? 0] ?? ''
         }
 
         return ''
@@ -261,7 +257,7 @@ class WeblensMedia implements MediaInfo {
         if (maxQuality === PhotoQuality.LowRes && this.thumbnail) {
             return this.thumbnail
         } else if (maxQuality === PhotoQuality.HighRes && this.fullres[pageNumber ?? 0]) {
-            return this.fullres[pageNumber ?? 0]
+            return this.fullres[pageNumber ?? 0] ?? ''
         }
 
         const data = await this.getImageData(maxQuality, controller?.signal ?? this.abort!.signal, pageNumber)

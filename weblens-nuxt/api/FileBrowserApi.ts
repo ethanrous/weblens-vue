@@ -49,7 +49,7 @@ export function CancelTask(taskId: string) {
 }
 
 export function UnsubFromFolder(subId: string) {
-    console.log('Unsubscribing from folder:', subId)
+    console.debug('Unsubscribing from folder:', subId)
     if (!subId || useWebsocketStore().status !== 'OPEN') {
         return
     }

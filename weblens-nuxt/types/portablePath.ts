@@ -70,6 +70,10 @@ export class PortablePath {
             return 'Trash'
         }
 
+        if (this.relativePath.length === 1 && filename === useUserStore().user.username) {
+            return 'Home'
+        }
+
         return filename
     }
 

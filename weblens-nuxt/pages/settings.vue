@@ -66,8 +66,21 @@ import WeblensButton from '~/components/atom/WeblensButton.vue'
 import Divider from '~/components/atom/Divider.vue'
 
 const userStore = useUserStore()
+const route = useRoute()
 
 function toSettingsPage(pageName: string) {
     navigateTo({ path: `/settings/${pageName}` })
 }
+
+watch(
+    route,
+    () => {
+        const currentPath = route.path
+
+        if (currentPath === '/settings' || currentPath === '/settings/') {
+            navigateTo({ path: '/settings/account', replace: true })
+        }
+    },
+    { immediate: true, deep: true },
+)
 </script>

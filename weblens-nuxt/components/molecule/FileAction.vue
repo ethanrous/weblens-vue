@@ -1,6 +1,9 @@
 <template>
     <div
-        :class="{ 'hover:bg-background-secondary flex h-20 w-full cursor-pointer flex-col rounded border p-1.5': true }"
+        :class="{
+            'hover:bg-background-secondary group flex h-20 w-full cursor-pointer flex-col rounded border p-1.5': true,
+            'border-theme-primary': locationStore.viewTimestamp === action.timestamp,
+        }"
         @click="locationStore.setViewTimestamp(action.timestamp)"
     >
         <span
@@ -21,16 +24,34 @@
             />
         </span>
 
-        <span v-else-if="action.actionType === FileAction.FileCreate"> <IconPlus /> {{ originPath?.filename }} </span>
+        <span
+            v-else-if="action.actionType === FileAction.FileCreate"
+            :class="{
+                'inline-flex items-center gap-0.5': true,
+                'text-text-tertiary group-hover:text-text-primary': afterRewindTimestamp,
+            }"
+        >
+            <IconPlus :size="14" />
+            <FileIcon :file="WeblensFile.FromAction(action)" />
+            {{ originPath?.filename }}
+        </span>
 
         <span v-else>
             {{ action.actionType }}
         </span>
 
-        <div :class="{ 'text-text-secondary mt-auto flex': true }">
+        <div
+            :class="{
+                'text-text-secondary mt-auto flex': true,
+                'text-text-tertiary group-hover:text-text-secondary': afterRewindTimestamp,
+            }"
+        >
             <span> File {{ actionName }} </span>
-            <span :class="{ 'ml-auto': true }">
-                {{ new Date(action.timestamp).toLocaleString() }}
+            <span
+                :class="{ 'ml-auto': true }"
+                :title="new Date(action.timestamp).toLocaleString()"
+            >
+                {{ relTime }}
             </span>
         </div>
     </div>
@@ -44,6 +65,9 @@ import { PortablePath } from '~/types/portablePath'
 import { friendlyActionName } from '~/util/history'
 import FilePath from '../atom/FilePath.vue'
 import useLocationStore from '~/stores/location'
+import { relativeTimeAgo } from '~/util/relativeTime'
+import FileIcon from '../atom/FileIcon.vue'
+import WeblensFile from '~/types/weblensFile'
 
 const locationStore = useLocationStore()
 
@@ -84,5 +108,13 @@ const actionName = computed(() => {
     }
 
     return friendlyActionName(props.action.actionType)
+})
+
+const relTime = computed(() => {
+    return relativeTimeAgo(props.action.timestamp)
+})
+
+const afterRewindTimestamp = computed(() => {
+    return locationStore.viewTimestamp > 0 && props.action.timestamp > locationStore.viewTimestamp
 })
 </script>

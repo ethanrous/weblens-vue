@@ -11,6 +11,12 @@ export const useTasksStore = defineStore('tasks', () => {
     const tasks = shallowRef<Map<string, Task<TaskType>>>()
     const taskPromises = shallowRef<Map<string, TaskPromiseParams>>(new Map())
 
+    const anyRunning = computed(() => {
+        if (!tasks.value) return false
+
+        return Array.from(tasks.value.values()).some((task) => task.isRunning)
+    })
+
     function setTaskPromise<T>(params: TaskPromiseParams<T>) {
         taskPromises.value.set(params.taskId, params)
     }
@@ -88,13 +94,15 @@ export const useTasksStore = defineStore('tasks', () => {
 
     return {
         tasks,
+        anyRunning,
+        taskPromises,
+
         upsertTask,
         setTaskComplete,
         removeTask,
         cancelTask,
         failTask,
 
-        taskPromises,
         setTaskPromise,
         removeTaskPromise,
     }

@@ -4,9 +4,15 @@
         :class="{ 'filebrowser-container relative flex h-full min-h-0 w-full min-w-60 items-center': true }"
     >
         <FileDragCounter />
-        <div v-if="error">
-            <span>Failed loading files: {{ error }}</span>
-        </div>
+        <span
+            v-if="error"
+            :class="{ 'mx-auto rounded-sm border border-amber-700 bg-amber-800/25 p-2 text-center text-xl': true }"
+        >
+            Fetching files failed
+            <span :class="{ 'text-text-secondary mt-1 text-xs': true }">
+                {{ error }}
+            </span>
+        </span>
         <div
             v-else-if="isLoading"
             :class="{ 'm-auto': true }"

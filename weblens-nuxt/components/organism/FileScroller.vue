@@ -1,6 +1,11 @@
 <template>
-    <div :class="{ 'page-root relative': true }">
+    <div
+        id="file-scroller"
+        :class="{ 'page-root relative': true }"
+    >
         <FileContextMenu />
+
+        <RewindIndicator />
 
         <span
             v-if="!filesStore.searchUpToDate && filesStore.searchRecurively && filesStore.fileSearch !== ''"
@@ -70,6 +75,7 @@ import FileContextMenu from './FileContextMenu.vue'
 import Loader from '../atom/Loader.vue'
 import useLocationStore from '~/stores/location'
 import NoResults from '../molecule/NoResults.vue'
+import RewindIndicator from '../molecule/RewindIndicator.vue'
 
 const filesStore = useFilesStore()
 const locationStore = useLocationStore()
@@ -207,9 +213,6 @@ function handleDrop(event: DragEvent) {
     }
 
     HandleDrop(event.dataTransfer.items, locationStore.activeFolderId, false, '')
-
-    // Handle the drop logic here
-    console.log('Files dropped:', event.dataTransfer?.files)
 }
 </script>
 

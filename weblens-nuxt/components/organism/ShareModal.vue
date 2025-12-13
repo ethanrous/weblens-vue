@@ -75,7 +75,7 @@ import CopyBox from '../molecule/CopyBox.vue'
 import { onClickOutside } from '@vueuse/core'
 import Table from '../atom/Table.vue'
 import type { UserInfo } from '@ethanrous/weblens-api'
-import type { TableColumn, TableColumns } from '~/types/table'
+import { TableType, type TableColumn, type TableColumns } from '~/types/table'
 
 const menuStore = useContextMenuStore()
 
@@ -104,7 +104,7 @@ const accessors = computed<TableColumns>(() => {
     return share.value.accessors.map<Record<string, TableColumn>>((u) => ({
         username: u.username,
         canDownload: {
-            tableType: 'checkbox',
+            tableType: TableType.Checkbox,
             checked: share.value?.permissions[u.username]?.canDownload ?? false,
             onchanged: async (c: boolean) => {
                 if (!share.value) return
@@ -115,7 +115,7 @@ const accessors = computed<TableColumns>(() => {
             },
         },
         canEdit: {
-            tableType: 'checkbox',
+            tableType: TableType.Checkbox,
             checked: share.value?.permissions[u.username]?.canEdit ?? false,
             onchanged: async (c: boolean) => {
                 if (!share.value) return
@@ -126,7 +126,7 @@ const accessors = computed<TableColumns>(() => {
             },
         },
         canDelete: {
-            tableType: 'checkbox',
+            tableType: TableType.Checkbox,
             checked: share.value?.permissions[u.username]?.canDelete ?? false,
             onchanged: async (c: boolean) => {
                 if (!share.value) return
@@ -138,7 +138,7 @@ const accessors = computed<TableColumns>(() => {
         },
         unshare: {
             flavor: 'danger',
-            tableType: 'button',
+            tableType: TableType.Button,
             icon: IconTrash,
             onclick: () => {
                 if (!share.value) return
@@ -153,8 +153,6 @@ function addAccessor(user: UserInfo) {
         console.error('No share to add accessor')
         return
     }
-
-    console.log('Adding accessor:', user.username)
 
     share.value.addAccessor(user.username)
 }

@@ -68,8 +68,4 @@ const { data: users } = useAsyncData(
 const emit = defineEmits<{
     (e: 'selectUser', value: UserInfo): void
 }>()
-
-watchEffect(() => {
-    console.log('focus?', focused.focused.value)
-})
 </script>

@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { TableType, type TableColumns, type TableTypes } from '~/types/table'
+import type { TableColumns, TableTypes, TableType } from '~/types/table'
 import WeblensButton from './WeblensButton.vue'
 import WeblensCheckbox from './WeblensCheckbox.vue'
 import { camelCaseToWords } from '~/util/string'

@@ -57,8 +57,6 @@ export const useMediaStore = defineStore('media', () => {
             sortDirection: timelineSortDirection.value,
             showRaw: showRaw.value,
         }
-
-        console.log('Saving media settings', mediaSettings.value[locationStore.activeFolderId])
     }
 
     async function fetchSingleMedia(contentId: string): Promise<WeblensMedia | undefined> {
@@ -182,7 +180,6 @@ export const useMediaStore = defineStore('media', () => {
     }
 
     watch([() => locationStore.isInTimeline, () => locationStore.activeFolderId], async () => {
-        console.log('Location store changed, reinitializing media settings')
         if (locationStore.isInTimeline) {
             initMediaSettings()
 

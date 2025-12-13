@@ -18,7 +18,7 @@ if (!process.env.VITE_PROXY_HOST && process.env.VITE_BUILD !== 'true') {
 // this sets a default port to 3000
 const vitePort = Number(process.env.VITE_PORT) ? Number(process.env.VITE_PORT) : 3000
 
-console.log(`Vite is running in ${mode} mode on port ${vitePort}`)
+console.debug(`Vite is running in ${mode} mode on port ${vitePort}`)
 
 export default defineNuxtConfig({
     compatibilityDate: '2025-05-15',

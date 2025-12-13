@@ -1,28 +1,37 @@
 <template>
     <div :class="{ 'bg-card-background-primary flex h-16 w-full shrink-0 items-center justify-between': true }">
-        <div :class="{ 'flex min-w-max flex-1 items-center': true }">
-            <IconChevronLeft
-                :class="{
-                    'mx-1 flex items-center justify-center rounded pr-0.5 transition md:mx-2': true,
-                    'text-text-secondary': !canNavigate,
-                    'hover:bg-card-background-hover cursor-pointer': canNavigate,
-                }"
-                @click="navigateBack"
-            />
-            <h3
-                :class="{ 'max-h-max cursor-pointer truncate text-lg text-nowrap select-none md:text-2xl': true }"
-                @contextmenu.stop.prevent="openContextMenu"
-                @click.stop="openContextMenu"
-            >
-                {{ fileName }}
-            </h3>
+        <div :class="{ 'flex min-w-max flex-1 flex-col': true }">
+            <span :class="{ 'inline-flex items-center': true }">
+                <IconChevronLeft
+                    :class="{
+                        'mx-1 inline-flex items-center justify-center rounded pr-0.5 leading-none transition md:mx-2': true,
+                        'text-text-secondary': !canNavigate,
+                        'hover:bg-card-background-hover cursor-pointer': canNavigate,
+                    }"
+                    @click="navigateBack"
+                />
+
+                <h3
+                    :class="{
+                        'inline max-h-max cursor-pointer truncate text-lg text-nowrap select-none md:text-2xl': true,
+                    }"
+                    @contextmenu.stop.prevent="openContextMenu"
+                    @click.stop="openContextMenu"
+                >
+                    {{ fileName }}
+                </h3>
+            </span>
         </div>
 
-        <div :class="{ 'relative flex h-10 max-w-30 flex-2 justify-center lg:max-w-[500px]': true }">
+        <div :class="{ 'relative flex h-10 max-w-30 flex-[1.5] justify-center lg:max-w-[500px]': true }">
             <Searchbar ref="searchbar" />
         </div>
 
         <div :class="{ 'relative mr-4 flex h-10 min-w-0 flex-1 flex-row items-center justify-end gap-2': true }">
+            <Loader
+                v-if="tasksStore.anyRunning"
+                :class="{ 'mr-2': true }"
+            />
             <FileSortControls v-if="!locationStore.isInTimeline" />
             <TimelineControls v-if="locationStore.isInTimeline" />
 
@@ -44,11 +53,13 @@ import { useMagicKeys, whenever } from '@vueuse/core'
 import Searchbar from '../molecule/Searchbar.vue'
 import FileSortControls from '../molecule/FileSortControls.vue'
 import useLocationStore from '~/stores/location'
+import Loader from '../atom/Loader.vue'
 
 const filesStore = useFilesStore()
 const locationStore = useLocationStore()
 const menuStore = useContextMenuStore()
 const userStore = useUserStore()
+const tasksStore = useTasksStore()
 
 const searchbar = ref<typeof Searchbar>()
 

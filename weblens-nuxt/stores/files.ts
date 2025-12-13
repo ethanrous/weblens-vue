@@ -294,8 +294,6 @@ const useFilesStore = defineStore('files', () => {
             sortDirection: sortDirection.value,
             fileShape: fileShape.value,
         }
-
-        console.log('Saving folders settings', foldersSettings.value[locationStore.activeFolderId])
     }
 
     function toggleSortDirection() {
@@ -305,7 +303,6 @@ const useFilesStore = defineStore('files', () => {
     }
 
     function setFileShape(newFileShape: FileShape) {
-        console.log('Setting file shape to', newFileShape)
         fileShape.value = newFileShape
 
         saveFoldersSettings()
@@ -381,10 +378,7 @@ const useFilesStore = defineStore('files', () => {
             searchUpToDate.value = false
 
             initFolderSettings()
-            console.log(
-                'Active folder changed, initializing settings',
-                foldersSettings.value[locationStore.activeFolderId],
-            )
+
             sortCondition.value = foldersSettings.value[locationStore.activeFolderId]?.sortCondition ?? 'date'
             sortDirection.value = foldersSettings.value[locationStore.activeFolderId]?.sortDirection ?? 1
             fileShape.value = foldersSettings.value[locationStore.activeFolderId]?.fileShape ?? 'square'

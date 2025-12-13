@@ -33,6 +33,7 @@
                 :selected="filesStore.activeFile?.IsHome()"
                 allow-collapse
                 fill-width
+                :disabled="!userStore.loggedIn"
                 @click.stop="WeblensFile.Home().GoTo()"
             >
                 <IconHome size="18" />
@@ -44,6 +45,7 @@
                 :selected="locationStore.inShareRoot"
                 allow-collapse
                 fill-width
+                :disabled="!userStore.loggedIn"
                 @click.stop="WeblensFile.ShareRoot().GoTo()"
             >
                 <IconUsers size="18" />
@@ -55,6 +57,7 @@
                 :selected="filesStore.activeFile?.IsTrash()"
                 allow-collapse
                 fill-width
+                :disabled="!userStore.loggedIn"
                 @click.stop="WeblensFile.Trash().GoTo()"
             >
                 <IconTrash size="18" />
@@ -69,7 +72,9 @@
                 label="New Folder"
                 allow-collapse
                 fill-width
-                :disabled="contextMenuStore.menuMode === 'newName'"
+                :disabled="
+                    contextMenuStore.menuMode === 'newName' || !userStore.loggedIn || locationStore.isViewingPast
+                "
                 @click.stop="handleNewFolder"
             >
                 <IconFolderPlus size="18" />
@@ -79,6 +84,7 @@
                 label="Upload"
                 allow-collapse
                 fill-width
+                :disabled="!userStore.loggedIn || locationStore.isViewingPast"
                 @files-selected="handleUpload"
             >
                 <IconUpload size="18" />
@@ -91,6 +97,7 @@
             </div>
 
             <WeblensButton
+                v-if="userStore.loggedIn"
                 label="Settings"
                 :type="(route.name as string).startsWith('settings') ? 'default' : 'outline'"
                 fill-width
@@ -98,6 +105,16 @@
                 @click.stop="goToSettings"
             >
                 <IconSettings size="18" />
+            </WeblensButton>
+
+            <WeblensButton
+                v-else
+                label="Log In"
+                fill-width
+                allow-collapse
+                @click.stop="userStore.logout()"
+            >
+                <IconUser size="18" />
             </WeblensButton>
         </div>
     </div>
@@ -112,6 +129,7 @@ import {
     IconSettings,
     IconTrash,
     IconUpload,
+    IconUser,
     IconUsers,
 } from '@tabler/icons-vue'
 import WeblensButton from '../atom/WeblensButton.vue'
@@ -134,6 +152,7 @@ watch(windowSize.width, (size: number) => {
 const filesStore = useFilesStore()
 const contextMenuStore = useContextMenuStore()
 const locationStore = useLocationStore()
+const userStore = useUserStore()
 const route = useRoute()
 
 const forceOpen = ref<boolean>(false)
